@@ -1,0 +1,60 @@
+/* SHELL DE LA PÁGINA */
+.page-centered {
+  min-height: calc(100vh - 120px); /* Ajuste dinámico para empujar el footer al fondo si hay pocos registros */
+  padding-bottom: 50px; /* <--- ESTE ES EL ESPACIO VERTICAL AL FINAL DE LA PÁGINA */
+  display: flex;
+  flex-direction: column;
+}
+
+/* NUEVA CLASE PARA EL ANCHO AL 80% */
+.page-inner-wide {
+  width: 80%;
+  max-width: 1400px;
+  margin: 0 auto;
+  margin-top: 24px;
+  margin-bottom: 40px; /* <--- ESPACIO EXTRA DEBAJO DE LA TABLA */
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Permite que el contenedor crezca y empuje el contenido */
+
+  /* Ajuste responsivo para celulares */
+  @media (max-width: 768px) {
+    width: 95%;
+  }
+}
+
+.hist-header {
+  text-align: center;
+  margin-bottom: 36px;
+  h1 { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+  p { font-size: 0.9rem; color: var(--text-muted); }
+}
+
+.hist-empty {
+  background: var(--surface-1);
+  border: 1.5px solid var(--border-2);
+  border-radius: 18px;
+  padding: 72px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+  transition: background 0.3s;
+
+  .empty-icon { width: 80px; height: 80px; border-radius: 20px; background: var(--surface-2); border: 1px solid var(--border-2); display: flex; align-items: center; justify-content: center; }
+  p { font-size: 0.95rem; color: var(--text-muted); }
+}
+
+/* FOOTER */
+.hist-footer {
+  background: var(--surface-1);
+  border-top: 1px solid var(--border);
+  text-align: center;
+  padding: 18px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  transition: background 0.3s;
+  width: 100%;
+}
