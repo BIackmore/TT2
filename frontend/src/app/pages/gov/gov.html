@@ -158,7 +158,7 @@
   <!-- ═══ HISTORIAL PROPIO ═══ -->
   <ng-container *ngIf="activeTab==='historial-gov'">
     <div class="sec-head">
-      <div><h2>Mi Historial de Análisis</h2><p>Imágenes que tú has subido y analizado acompañadas de sus métricas oficiales.</p></div>
+      <div><h2>Mi Historial de Análisis</h2><p>Imágenes que han sido cargadas y analizadas por el Usuario Gubernamental Actual, y los datos correspondientes.</p></div>
       <button class="btn-ok" (click)="exportHistorial()" *ngIf="miHistorial.length > 0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Exportar (CSV)</button>
     </div>
 
@@ -174,7 +174,7 @@
 
         <div class="img-body">
           <div class="img-header">
-            <p class="img-name" [title]="img.nombre_archivo">{{ img.nombre_archivo || 'ausilio' }}</p>
+            <p class="img-name" [title]="img.nombre_archivo || img.nombre || img.imagen">{{ img.nombre_archivo || img.nombre || img.imagen || 'Sin nombre' }}</p>
             <span class="badge" [ngClass]="getBadgeClass(img.nivel_riesgo || img.id_riesgo)">
               Riesgo {{ (img.nivel_riesgo || translateRiesgo(img.id_riesgo)) | titlecase }}
             </span>
@@ -203,7 +203,7 @@
   <!-- ═══ MONITOREO IMÁGENES ═══ -->
  <ng-container *ngIf="activeTab==='monitoreo'">
     <div class="sec-head">
-      <div><h2>Monitoreo General de Imágenes</h2><p>Explora y filtra la totalidad de imágenes procesadas en la plataforma forestal.</p></div>
+      <div><h2>Monitoreo General de Imágenes</h2><p>Visualización y Filtrado de TODAS las imágenes procesadas y su correspondiente Resultado de Análisis en la plataforma.</p></div>
       <div style="display:flex; gap:16px; align-items:center;">
         <button class="btn-ok" (click)="exportMonitoreo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Exportar</button>
         
@@ -226,7 +226,7 @@
 
         <div class="img-body">
           <div class="img-header">
-            <p class="img-name" [title]="img.nombre_archivo">{{ img.nombre_archivo || 'pequeño error' }}</p>
+            <p class="img-name" [title]="img.nombre_archivo || img.nombre || img.imagen">{{ img.nombre_archivo || img.nombre || img.imagen || 'Sin nombre' }}</p>
             <span class="badge" [ngClass]="getBadgeClass(img.nivel_riesgo || img.id_riesgo)">
               Riesgo {{ (img.nivel_riesgo || translateRiesgo(img.id_riesgo)) | titlecase }}
             </span>

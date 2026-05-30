@@ -71,25 +71,32 @@ export class GovComponent implements OnInit {
   get filteredImagenes() {
     if (!this.mSearch) return this.todasImagenes;
     const s = this.mSearch.toLowerCase();
-    return this.todasImagenes.filter(img =>
-      (img.nombre_archivo && img.nombre_archivo.toLowerCase().includes(s)) ||
-      (img.usuario && img.usuario.toLowerCase().includes(s)) ||
-      (img.zona && img.zona.toLowerCase().includes(s))
-    );
+
+    return this.todasImagenes.filter(img => {
+      // 1. Extraemos y normalizamos el Nombre de la Imagen (cubriendo todos los alias)
+      const nombreImg = (img.nombre_archivo || img.nombre || img.imagen || '').toLowerCase();
+      
+      // 2. Extraemos y normalizamos el Nombre del Usuario
+      const usuario = (img.usuario || '').toLowerCase();
+      
+      // 3. Extraemos el Nivel de Riesgo (y si viene como número, lo traducimos a texto)
+      const riesgo = (img.nivel_riesgo || this.translateRiesgo(img.id_riesgo) || '').toLowerCase();
+
+      // Retornamos true si la búsqueda del usuario coincide con ALGUNA de las 3 opciones
+      return nombreImg.includes(s) || usuario.includes(s) || riesgo.includes(s);
+    });
   }
 
   // CARGA DE DATOS PARA LAS PESTAÑAS (Historial y Monitoreo)
   loadDashboardData() {
     this.loading = true;
     forkJoin({
-      analyses: this.platformApi.getAnalyses({ limit: 100 }),
-      images: this.platformApi.getImages()
+      analyses: this.platformApi.getAnalyses({ limit: 100 }), // Carga 100 para Mi Historial
+      images: this.platformApi.getImages({ limit: 300 })     // pedir 300 para Monitoreo
     }).subscribe({
       next: ({ analyses, images }) => {
         this.loading = false;
-        // Se llena miHistorial para que tu *ngFor="let img of miHistorial" del HTML funcione
         if (analyses.data) this.miHistorial = analyses.data;
-        // Se llena todasImagenes para el Monitoreo
         if (images.data) this.todasImagenes = images.data;
         this.cdr.detectChanges();
       },
@@ -101,24 +108,78 @@ export class GovComponent implements OnInit {
     });
   }
 
-  // 4. FUNCIONES DE EXPORTACIÓN (Resuelven los errores de "Property does not exist")
+  // 4. FUNCIONES DE EXPORTACIÓN
   exportHistorial() {
-    this.exportToCsv(this.miHistorial, 'Mi_Historial_Analisis.csv');
+    if (!this.miHistorial || this.miHistorial.length === 0) return;
+
+    const processedData = this.miHistorial.map(row => {
+      return {
+        id_analisis: row.id_analisis,
+        nombre_archivo: row.nombre_archivo || row.imagen || 'Sin nombre',
+        ruta_archivo: row.ruta_archivo || 'N/D',
+        usuario: row.usuario || 'Tú',
+        nivel_riesgo: this.translateRiesgo(row.id_riesgo || row.nivel_riesgo),
+        porcentaje_afectacion: `${row.porcentaje_afectacion || 0}%`,
+        riesgo_visual: row.riesgo_visual != null ? `${row.riesgo_visual}%` : 'N/D',
+        riesgo_climatico: row.riesgo_climatico != null ? `${row.riesgo_climatico}%` : 'N/D',
+        ancho: row.resolucion_width || 'N/D',
+        alto: row.resolucion_height || 'N/D',
+        fecha: this.formatDate(row.fecha || row.fecha_analisis)
+      };
+    });
+
+    this.exportToCsv(processedData, 'Mi_Historial_Analisis.csv');
   }
 
   exportMonitoreo() {
-    this.exportToCsv(this.filteredImagenes, 'Monitoreo_General_Imagenes.csv');
+    if (!this.filteredImagenes || this.filteredImagenes.length === 0) return;
+
+    const processedData = this.filteredImagenes.map(row => {
+      return {
+        id_imagen: row.id_imagen || 'N/D',
+        nombre_archivo: row.nombre_archivo || row.nombre || 'Sin nombre',
+        ruta_archivo: row.ruta_archivo || 'N/D',
+        usuario: row.usuario || 'N/D',
+        latitud: row.lat || 'N/D',
+        longitud: row.lng || 'N/D',
+        nivel_riesgo: this.translateRiesgo(row.id_riesgo || row.nivel_riesgo),
+        porcentaje_afectacion: `${row.porcentaje_afectacion || 0}%`,
+        riesgo_visual: row.riesgo_visual != null ? `${row.riesgo_visual}%` : 'N/D',
+        riesgo_climatico: row.riesgo_climatico != null ? `${row.riesgo_climatico}%` : 'N/D',
+        ancho: row.resolucion_width || 'N/D', // Preservamos los nombres traducidos
+        alto: row.resolucion_height || 'N/D',  // Preservamos los nombres traducidos
+        tamano_bytes: row.tamano_bytes || 0,   // Muestra el valor en bytes real de la BD sin conversiones
+        id_analisis: row.id_analisis || 'N/D',
+        fecha_carga: this.formatDate(row.fecha || row.fecha_carga)
+      };
+    });
+
+    this.exportToCsv(processedData, 'Monitoreo_General_Imagenes.csv');
   }
 
   // Generador universal de CSV (Elimina la necesidad del ExportService roto)
+  // Procesador universal de CSV con codificación UTF-8 para acentos y eñes
   private exportToCsv(data: any[], filename: string) {
     if (!data || data.length === 0) return;
+    
+    // Extrae las llaves limpias del nuevo objeto mapeado arriba
     const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(row => Object.values(row).map(v => `"${v}"`).join(',')).join('\n');
-    const csv = `${headers}\n${rows}`;
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    
+    // Procesa las filas envolviendo los textos en comillas para evitar errores con las comas
+    const rows = data.map(row => 
+      Object.values(row).map(v => {
+        const str = String(v).replace(/"/g, '""'); // Escapa comillas internas si existen
+        return `"${str}"`;
+      }).join(',')
+    ).join('\n');
+    
+    const csvContent = `${headers}\n${rows}`;
+    
+    // El Byte Order Mark (BOM) '\uFEFF' le avisa a Excel que el archivo tiene acentos en Español
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
+    
     link.setAttribute('href', url);
     link.setAttribute('download', filename);
     document.body.appendChild(link);
@@ -349,42 +410,37 @@ export class GovComponent implements OnInit {
 
   formatDate(dateStr: any): string {
     if (!dateStr) return 'N/D';
-    try {
-      return new Date(dateStr).toLocaleDateString('es-MX', {
-        day: '2-digit', month: '2-digit', year: 'numeric'
-      });
-    } catch {
+    
+    // Si la base de datos (PostgreSQL) ya nos envía la fecha formateada (ej. "29/05/2026")
+    // detenemos el procesamiento y la mostramos tal cual para evitar el "Invalid Date".
+    if (typeof dateStr === 'string' && dateStr.includes('/')) {
       return dateStr;
     }
+
+    // Si llega como un Timestamp o formato ISO estándar, la convertimos.
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('es-MX', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      });
+    }
+    
+    return dateStr;
   }
 
   getImageUrl(img: any): string {
     if (!img) return '';
     
-    // Prioridad 1: Si guardamos la ruta física completa desde el backend (que tiene el número de multer)
-    let pathTarget = img.ruta_archivo || img.ruta_imagen || img.ruta;
-    
-    // Prioridad 2: Si viene en el objeto interno del JSON de análisis
-    if (!pathTarget && img.resultado_json) {
-      try {
-        const parsed = typeof img.resultado_json === 'string' ? JSON.parse(img.resultado_json) : img.resultado_json;
-        pathTarget = parsed.ruta_imagen;
-      } catch(e) {}
-    }
+    // Buscamos agresivamente en TODAS las posibles propiedades que tu backend usa
+    const pathTarget = img.ruta_archivo || img.ruta_imagen || img.ruta || img.imagen || img.nombre_archivo;
 
     if (pathTarget) {
-      // Extrae de forma segura el nombre físico que Multer guardó con el número adelante
+      // Limpiamos la ruta y nos quedamos solo con el nombre del archivo final
       const filename = pathTarget.split('\\').pop()?.split('/').pop();
-      if (filename) {
+      if (filename && filename.includes('.')) {
         return `http://localhost:3000/uploads/${filename}`;
       }
     }
-
-    // Fallback: si no hay ruta con número, intentamos buscarla con el nombre de archivo limpio
-    if (img.nombre_archivo) {
-      return `http://localhost:3000/uploads/${img.nombre_archivo}`;
-    }
-
     return '';
   }
 

@@ -3,6 +3,7 @@ import { AnalisisGetAllQuery } from "@/types";
 import { Request, Response, NextFunction } from "express";
 
 /** GET /api/analisis  – listado con filtros de rol */
+/** GET /api/analisis  – listado con filtros de rol */
 const getAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {
@@ -18,7 +19,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction) => {
     const params: Array<string | number> = [];
     let pi = 1;
 
-    if (req.user.rol === "user") {
+    if (req.user.rol === "user" || req.user.rol === "gov") {
       filtros.push(`i.id_usuario = $${pi++}`);
       params.push(req.user.id_usuario);
     }
@@ -34,14 +35,20 @@ const getAll = async (req: Request, res: Response, next: NextFunction) => {
       `SELECT
          a.id_analisis,
          i.nombre_archivo    AS imagen,
+         i.ruta_archivo,
          u.nombre            AS usuario,
          LOWER(nr.clave)     AS nivel_riesgo,
+         a.id_riesgo,
          nr.color_hex,
          ROUND((a.umbral_confianza*100)::numeric) AS confianza,
          a.porcentaje_afectacion,
+         a.riesgo_visual,         
+         a.riesgo_climatico,      
+         i.resolucion_width,      
+         i.resolucion_height,
          a.zonas_detectadas,
          a.modelo_version,
-         TO_CHAR(a.fecha_analisis,'DD/MM/YYYY HH24:MI') AS fecha
+         TO_CHAR(a.fecha_analisis,'DD/MM/YYYY') AS fecha
         FROM analisis a
         JOIN imagenes i ON i.id_imagen = a.id_imagen
         JOIN usuarios u ON u.id_usuario = i.id_usuario

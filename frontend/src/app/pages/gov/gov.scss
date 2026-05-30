@@ -1287,10 +1287,43 @@
   font-weight: 600;
 }
 
+/* Estructura compartida para el banner de error gubernamental */
+.pending-banner.error-banner {
+  display: flex; 
+  align-items: flex-start; 
+  gap: 12px; 
+  border-radius: 12px;
+  padding: 14px 18px; 
+  margin-bottom: 20px; 
+  font-size: 0.85rem; 
+  line-height: 1.5;
+  box-shadow: var(--shadow-sm);
+  
+  /* Ajuste de los elementos internos */
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  
+  strong {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+}
+
+/* Colores en Modo Claro (Sobrescribe la regla genérica) */
 .error-banner {
-  background: #FEE2E2;
-  border-color: #FECACA;
-  color: #B91C1C;
+  background: #FEE2E2 !important;
+  border: 1.5px solid #FECACA !important;
+  color: #B91C1C !important;
+}
+
+/* Compatibilidad automática con Modo Oscuro */
+[data-theme="dark"] .pending-banner.error-banner {
+  background: rgba(220, 38, 38, 0.1) !important;
+  border-color: rgba(220, 38, 38, 0.25) !important;
+  color: #fca5a5 !important;
 }
 
 
