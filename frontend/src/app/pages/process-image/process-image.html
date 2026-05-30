@@ -1,0 +1,231 @@
+<app-navbar></app-navbar>
+
+<div class="page-centered">
+  <div class="proc-wrapper">
+
+    <div class="offline-banner" *ngIf="!offlineQ.isOnline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <line x1="1" y1="1" x2="23" y2="23"/>
+        <path d="M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"/>
+      </svg>
+      <div>
+        <strong>Sin conexión a internet</strong>
+        <span>Las imágenes se guardarán localmente y se analizarán al recuperar conexión.</span>
+      </div>
+    </div>
+
+    <div class="pending-banner" *ngIf="offlineQ.isOnline && pendingCount > 0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+      </svg>
+      <div>
+        <strong>Conexión restaurada</strong>
+        <span>Subiendo {{ pendingCount }} imagen(es) pendiente(s) automáticamente...</span>
+      </div>
+    </div>
+
+    <div class="proc-header">
+      <h1>Analizar una Nueva Zona</h1>
+      <p>Carga una imagen aérea o de dron para evaluar el nivel de riesgo de incendio.</p>
+    </div>
+
+    <div class="pending-banner error-banner" *ngIf="error">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <div>
+        <strong>Error al procesar</strong>
+        <span>{{ error }}</span>
+      </div>
+    </div>
+
+    <div class="proc-grid">
+
+      <div class="proc-card">
+        <div class="proc-card-head upload-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          1. Cargar Imagen
+        </div>
+        <div class="proc-card-body">
+          <div class="drop-zone"
+            [class.dragging]="isDragging"
+            [class.has-file]="preview"
+            (drop)="onDrop($event)"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (click)="!preview && fileInput.click()">
+            <ng-container *ngIf="!preview">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" width="44" height="44">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <p class="drop-title">Sube una imagen</p>
+              <p class="drop-sub">Arrastra y suelta, o haz clic para seleccionar<br>
+                <span class="drop-types">JPG, PNG, TIFF · Máx. 50 MB</span>
+              </p>
+            </ng-container>
+            <img *ngIf="preview" [src]="preview" class="preview-img" />
+          </div>
+
+          <div class="file-row">
+            <label class="file-label" (click)="$event.stopPropagation()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              Seleccionar archivo
+              <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+            </label>
+            <span class="file-name">{{ selectedFile ? selectedFile.name : 'ningún archivo seleccionado' }}</span>
+          </div>
+
+          <div class="upload-actions">
+            <button class="btn-analyze" [disabled]="!selectedFile || loading" (click)="analyze()">
+              <ng-container *ngIf="!loading">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                {{ offlineQ.isOnline ? 'Analizar Riesgo' : 'Guardar sin conexión' }}
+              </ng-container>
+              <ng-container *ngIf="loading">
+                <span class="spinner"></span>
+                {{ offlineQ.isOnline ? 'Analizando...' : 'Guardando...' }}
+              </ng-container>
+            </button>
+            <button *ngIf="selectedFile" class="btn-ghost" (click)="reset()">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="proc-card result-card">
+        <div class="proc-card-head result-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          2. Resultado del Análisis
+        </div>
+        <div class="proc-card-body result-body-wrap">
+
+          <div class="result-empty" *ngIf="!loading && !resultadoVisible">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" width="40" height="40">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <p class="empty-title">Esperando imagen para analizar...</p>
+            <p class="empty-sub">El resultado de la IA aparecerá aquí</p>
+          </div>
+
+          <div class="result-empty" *ngIf="loading">
+            <span class="spinner lg"></span>
+            <p class="empty-title" style="margin-top:16px">Procesando con IA...</p>
+            <p class="empty-sub">Extrayendo coordenadas y evaluando CNN</p>
+          </div>
+
+          <div class="result-content" *ngIf="resultadoVisible">
+
+            <div class="top-result-container">
+              <div class="map-view-wrapper">
+                <img *ngIf="mapImage" [src]="mapImage" class="map-final-img" alt="Mapa de Riesgo">
+                <div class="map-overlay-scan"></div> <div class="map-label">Mapa de Riesgo</div>
+              </div>
+
+              <div class="class-wrapper">
+                <span class="class-title">Clase Final Asignada</span>
+                <div class="final-badge" [ngClass]="getFinalClassStyle()">
+                  <svg *ngIf="finalClass.toLowerCase() === 'alto'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <svg *ngIf="finalClass.toLowerCase() === 'medio'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <svg *ngIf="finalClass.toLowerCase() === 'bajo'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  -- {{ finalClass }} --
+                </div>
+              </div>
+            </div>
+
+            <div class="gauges-grid">
+
+              <div class="gauge-card">
+                <span class="gauge-title">General</span>
+                <div class="svg-container">
+                  <svg viewBox="0 0 100 100" width="110" height="110">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="var(--surface-3)" stroke-width="8"/>
+                    <circle cx="50" cy="50" r="45" fill="none" [attr.stroke]="getRiskColor(generalRisk)" stroke-width="8" stroke-dasharray="282.7" [attr.stroke-dashoffset]="getSvgOffset(generalRisk)" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                  </svg>
+                  <div class="gauge-value">
+                    <span class="g-num">{{ generalRisk }}<small>%</small></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gauge-card">
+                <span class="gauge-title">Visual (CNN)</span>
+                <div class="svg-container">
+                  <svg viewBox="0 0 100 100" width="110" height="110">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="var(--surface-3)" stroke-width="8"/>
+                    <circle cx="50" cy="50" r="45" fill="none" [attr.stroke]="getRiskColor(visualRisk)" stroke-width="8" stroke-dasharray="282.7" [attr.stroke-dashoffset]="getSvgOffset(visualRisk)" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                  </svg>
+                  <div class="gauge-value">
+                    <span class="g-num">{{ visualRisk }}<small>%</small></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gauge-card">
+                <span class="gauge-title">Climático</span>
+                <div class="svg-container">
+                  <svg viewBox="0 0 100 100" width="110" height="110">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="var(--surface-3)" stroke-width="8"/>
+                    <circle cx="50" cy="50" r="45" fill="none" [attr.stroke]="getRiskColor(climaticRisk)" stroke-width="8" stroke-dasharray="282.7" [attr.stroke-dashoffset]="getSvgOffset(climaticRisk)" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                  </svg>
+                  <div class="gauge-value">
+                    <span class="g-num">{{ climaticRisk }}<small>%</small></span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="weather-metrics">
+              <div class="metric-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#D94A18" stroke-width="2" width="16" height="16"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                <div class="m-data">
+                  <span class="m-val">{{ weatherParams.temp }}</span>
+                  <span class="m-lbl">Temperatura</span>
+                </div>
+              </div>
+              <div class="metric-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#0369A1" stroke-width="2" width="16" height="16"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                <div class="m-data">
+                  <span class="m-val">{{ weatherParams.humidity }}</span>
+                  <span class="m-lbl">Humedad</span>
+                </div>
+              </div>
+              <div class="metric-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#5A6E84" stroke-width="2" width="16" height="16"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                <div class="m-data">
+                  <span class="m-val">{{ weatherParams.wind }}</span>
+                  <span class="m-lbl">Viento</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><div class="queue-section" *ngIf="queuedItems.length > 0">
+      </div>
+
+  </div>
+</div>
+
+<footer class="page-footer">© 2026 Proyecto de Detección de Zonas con Riesgo de Incendios</footer>
