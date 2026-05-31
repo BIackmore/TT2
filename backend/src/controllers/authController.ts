@@ -1,4 +1,6 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 import { query } from "@/db";
 import { RefreshTokenBody, User } from "@/types";
 import { audit, issueAuthTokens, verifyRefreshToken } from "@/services";
@@ -303,4 +305,114 @@ const refresh = async (
   }
 };
 
-export default { login, register, registerGov, me, refresh };
+const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { correo } = req.body;
+
+    if (!correo) {
+      return res.status(400).json({ ok: false, error: "El correo es obligatorio" });
+    }
+
+    const user = await query(
+      "SELECT id_usuario FROM usuarios WHERE LOWER(correo)=LOWER($1)",
+      [correo]
+    );
+
+    if (!user.rows.length) {
+      return res.status(404).json({ ok: false, error: "No existe una cuenta con ese correo" });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+
+    await query(
+      `INSERT INTO password_resets (correo, token, expira_en)
+       VALUES ($1, $2, NOW() + INTERVAL '15 minutes')`,
+      [correo, token]
+    );
+const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
+console.log("MAIL_USER:", process.env.MAIL_USER);
+console.log("MAIL_PASS length:", process.env.MAIL_PASS?.length);
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+    await transporter.sendMail({
+      from: `"Sistema de Prevención de Incendios" <${process.env.MAIL_USER}>`,
+      to: correo,
+      subject: "Recuperación de contraseña",
+      html: `
+        <h2>Recuperación de contraseña</h2>
+        <p>Haz clic en el siguiente enlace para cambiar tu contraseña:</p>
+        <a href="${resetUrl}">${resetUrl}</a>
+        <p>Este enlace expira en 15 minutos.</p>
+      `,
+    });
+
+    return res.json({
+      ok: true,
+      message: "Si el correo existe, se enviaron instrucciones para recuperar la contraseña."
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ ok: false, error: "Token y contraseña son obligatorios" });
+    }
+
+    const reset = await query(
+      `SELECT * FROM password_resets
+       WHERE token = $1
+       AND usado = FALSE
+       AND expira_en > NOW()`,
+      [token]
+    );
+
+    if (!reset.rows.length) {
+      return res.status(400).json({ ok: false, error: "Token inválido o expirado" });
+    }
+
+    const correo = reset.rows[0].correo;
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await query(
+      `UPDATE usuarios
+       SET contrasena = $1
+       WHERE LOWER(correo)=LOWER($2)`,
+      [passwordHash, correo]
+    );
+
+    await query(
+      `UPDATE password_resets
+       SET usado = TRUE
+       WHERE token = $1`,
+      [token]
+    );
+
+    return res.json({
+      ok: true,
+      message: "Contraseña actualizada correctamente"
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+
+export default { login, register, registerGov, me, refresh,  forgotPassword, resetPassword, };

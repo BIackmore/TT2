@@ -507,3 +507,33 @@
 
   </div>
 </div>
+
+
+<div class="modal-backdrop" *ngIf="showDeleteModal">
+  <div class="confirm-modal">
+    <div class="modal-icon danger">
+      🗑️
+    </div>
+
+    <h3>Eliminar usuario</h3>
+
+    <p>
+      ¿Seguro que deseas eliminar a
+      <strong>{{ userToDelete?.nombre }}</strong>?
+    </p>
+
+    <p class="modal-warning">
+      Esta acción no se puede deshacer.
+    </p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" (click)="cancelDeleteUser()">
+        Cancelar
+      </button>
+
+      <button type="button" class="btn-danger" (click)="confirmDeleteUser()">
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>

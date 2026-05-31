@@ -19,7 +19,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction) => {
     const params: Array<string | number> = [];
     let pi = 1;
 
-    if (req.user.rol === "user") {
+    if (req.user.rol === "user" || req.user.rol === "gov") {
       filtros.push(`i.id_usuario = $${pi++}`);
       params.push(req.user.id_usuario);
     }

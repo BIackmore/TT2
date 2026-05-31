@@ -20,7 +20,7 @@
 <ng-container *ngIf="activeTab==='procesar'">
     <div class="sec-head"><div><h2>Procesar Imagen con IA</h2><p>Evaluación de riesgo forestal con generación de dictamen y reporte oficial.</p></div></div>
 
-    <div class="pending-banner error-banner" *ngIf="errorProcess" style="margin-bottom:20px;">
+    <div class="pending-banner error-banner" *ngIf="errorProcess">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <div><strong>Error al procesar</strong><span>{{ errorProcess }}</span></div>
     </div>
@@ -174,7 +174,7 @@
 
         <div class="img-body">
           <div class="img-header">
-            <p class="img-name" [title]="img.nombre_archivo">{{ img.nombre_archivo || 'ausilio' }}</p>
+            <p class="img-name" [title]="img.nombre_archivo || img.nombre || img.imagen">{{ img.nombre_archivo || img.nombre || img.imagen || 'Sin nombre' }}</p>
             <span class="badge" [ngClass]="getBadgeClass(img.nivel_riesgo || img.id_riesgo)">
               Riesgo {{ (img.nivel_riesgo || translateRiesgo(img.id_riesgo)) | titlecase }}
             </span>
@@ -226,7 +226,7 @@
 
         <div class="img-body">
           <div class="img-header">
-            <p class="img-name" [title]="img.nombre_archivo">{{ img.nombre_archivo || 'pequeño error' }}</p>
+            <p class="img-name" [title]="img.nombre_archivo || img.nombre || img.imagen">{{ img.nombre_archivo || img.nombre || img.imagen || 'Sin nombre' }}</p>
             <span class="badge" [ngClass]="getBadgeClass(img.nivel_riesgo || img.id_riesgo)">
               Riesgo {{ (img.nivel_riesgo || translateRiesgo(img.id_riesgo)) | titlecase }}
             </span>

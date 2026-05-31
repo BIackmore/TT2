@@ -82,6 +82,17 @@ export interface RefreshResponse {
   refresh_expires_in?: number;
 }
 
+export interface ForgotPasswordResponse {
+  ok: boolean;
+  message: string;
+  token: string;
+}
+
+export interface ResetPasswordResponse {
+  ok: boolean;
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -108,4 +119,15 @@ export class AuthApiService {
   me(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${this.baseUrl}/me`);
   }
+
+  forgotPassword(correo: string): Observable<ForgotPasswordResponse> {
+  return this.http.post<ForgotPasswordResponse>(`${this.baseUrl}/forgot-password`, { correo });
+}
+
+resetPassword(token: string, password: string): Observable<ResetPasswordResponse> {
+  return this.http.post<ResetPasswordResponse>(`${this.baseUrl}/reset-password`, {
+    token,
+    password,
+  });
+}
 }

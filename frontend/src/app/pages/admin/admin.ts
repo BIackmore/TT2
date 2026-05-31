@@ -28,6 +28,8 @@ import { ExportService } from '../../services/export.service';
 })
 export class AdminComponent implements OnInit {
   activeTab = 'usuarios';
+  showDeleteModal = false;
+  userToDelete: UserProfile | null = null;
 
   navItems: NavItem[] = [
     {
@@ -265,25 +267,41 @@ export class AdminComponent implements OnInit {
   }
 
   deleteUser(correo: string) {
-    const user = this.users.find((item) => item.correo === correo);
-    if (!user?.id_usuario) {
-      return;
-    }
+  const user = this.users.find((item) => item.correo === correo);
+  if (!user?.id_usuario) return;
 
-    if (confirm('¿Eliminar este usuario?')) {
-      this.platformApi.deleteUser(user.id_usuario).subscribe({
-        next: () => this.loadAdminData(),
-        error: () => {
-          this.error = 'No se pudo eliminar el usuario.';
-        },
-      });
-    }
+  this.userToDelete = user;
+  this.showDeleteModal = true;
   }
 
+
+  cancelDeleteUser() {
+  this.showDeleteModal = false;
+  this.userToDelete = null;
+}
+
+confirmDeleteUser() {
+  if (!this.userToDelete?.id_usuario) return;
+
+  this.platformApi.deleteUser(this.userToDelete.id_usuario).subscribe({
+    next: () => {
+      this.showDeleteModal = false;
+      this.userToDelete = null;
+      this.loadAdminData();
+    },
+    error: () => {
+      this.error = 'No se pudo eliminar el usuario.';
+      this.showDeleteModal = false;
+      this.userToDelete = null;
+    },
+  });
+}
   toggleEstado(u: UserProfile) {
     if (!u.id_usuario) {
       return;
     }
+
+    
 
     this.platformApi.toggleUserStatus(u.id_usuario).subscribe({
       next: ({ activo }) => {
