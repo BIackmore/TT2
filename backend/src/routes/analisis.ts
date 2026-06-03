@@ -5,6 +5,7 @@ import { Router } from "express";
 const analisisRouter = Router();
 analisisRouter.use(authenticate);
 analisisRouter.get("/stats", analisisController.getStats);
+analisisRouter.get("/model-metrics", analisisController.getModelMetrics);
 analisisRouter.get("/", analisisController.getAll);
 analisisRouter.get("/:id", analisisController.getOne);
 

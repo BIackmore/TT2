@@ -179,6 +179,18 @@ export interface CreateReportPayload {
   parametros?: Record<string, unknown>;
 }
 
+export interface ModelMetrics {
+  status: string;
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  matriz_confusion: number[][];
+  labels: string[];
+  total_imagenes: number;
+  tiempo_respuesta: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlatformApiService {
   private readonly http = inject(HttpClient);
@@ -259,6 +271,10 @@ export class PlatformApiService {
     });
   }
 
+  getModelMetrics(): Observable<ApiResponse<ModelMetrics>> {
+  return this.http.get<ApiResponse<ModelMetrics>>(`${this.baseUrl}/analisis/model-metrics`);
+  }
+  
   private buildParams(params?: Record<string, string | number | undefined>): HttpParams {
     let httpParams = new HttpParams();
 

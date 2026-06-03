@@ -1,0 +1,10 @@
+flask
+flask-cors
+numpy
+pillow
+scikit-learn
+tensorflow
+python-dotenv
+requests
+opencv-python-headless
+matplotlib

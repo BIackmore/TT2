@@ -91,12 +91,14 @@ export class GovComponent implements OnInit {
   loadDashboardData() {
     this.loading = true;
     forkJoin({
-      analyses: this.platformApi.getAnalyses({ limit: 100 }), // Carga 100 para Mi Historial
-      images: this.platformApi.getImages({ limit: 300 })     // pedir 300 para Monitoreo
+      analyses: this.platformApi.getAnalyses({ limit: 100 }),
+      images: this.platformApi.getImages({ limit: 300 })  
     }).subscribe({
       next: ({ analyses, images }) => {
         this.loading = false;
+        // Se llena miHistorial para que tu *ngFor="let img of miHistorial" del HTML funcione
         if (analyses.data) this.miHistorial = analyses.data;
+        // Se llena todasImagenes para el Monitoreo
         if (images.data) this.todasImagenes = images.data;
         this.cdr.detectChanges();
       },

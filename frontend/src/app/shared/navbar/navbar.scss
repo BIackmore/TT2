@@ -66,3 +66,40 @@
   border-radius: 0 0 13px 13px; transition: background 0.2s;
   &:hover { background: rgba(220,38,38,0.06); }
 }
+
+
+.nav-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(120, 70, 45, 0.18);
+  background: rgba(255, 255, 255, 0.55);
+  color: #6b3a2a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nav-logout:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+:host-context([data-theme='dark']) .nav-logout {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+@media (max-width: 768px) {
+  .nav-logout {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 0.72rem;
+  }
+
+  .nav-logout span {
+    display: none;
+  }
+}

@@ -24,7 +24,7 @@
     <div class="sec-head">
       <div>
         <h2>Gestión de Usuarios</h2>
-        <p>Administra cuentas del sistema — crea usuarios gubernamentales y revisa el historial de actividad</p>
+        <p>Administra cuentas del sistema </p>
       </div>
       <div class="sec-actions">
         <button class="btn-ghost" (click)="showHistorial=!showHistorial">
@@ -282,57 +282,89 @@
        RENDIMIENTO + MÉTRICAS
   ═══════════════════════════════════════════ -->
   <ng-container *ngIf="activeTab==='rendimiento'">
-    <div class="sec-head"><div><h2>Rendimiento & Métricas del Sistema</h2><p>Estadísticas del modelo y estado del servidor</p></div><button class="btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Actualizar</button></div>
-    <div class="four-cols mb-20">
-      <div class="stat-card"><div class="sc-icon" style="background:rgba(38,201,122,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg></div><div class="sc-val ok-text">{{ perf.precision }}%</div><div class="sc-label">Precisión Promedio</div></div>
-      <div class="stat-card"><div class="sc-icon" style="background:rgba(56,189,248,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="sc-val info-text">{{ perf.respuesta }}</div><div class="sc-label">Tiempo de Respuesta</div></div>
-      <div class="stat-card"><div class="sc-icon" style="background:rgba(255,87,34,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ember)" stroke-width="2" width="18" height="18"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg></div><div class="sc-val ember-text">{{ perf.detecciones }}</div><div class="sc-label">Detecciones Totales</div></div>
-      <div class="stat-card"><div class="sc-icon" style="background:rgba(255,152,0,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div><div class="sc-val warn-text">{{ perf.falsos }}</div><div class="sc-label">Falsos Positivos</div></div>
+  <div class="sec-head">
+    <div>
+      <h2>Rendimiento & Métricas del Modelo</h2>
+      <p>Métricas reales obtenidas del modelo de inteligencia artificial.</p>
     </div>
-    <div class="card card-padded mb-16">
-      <p style="font-weight:700;font-family:Rajdhani,sans-serif;font-size:1rem;margin-bottom:4px">Precisión a lo Largo del Tiempo</p>
-      <p class="muted-text" style="font-size:0.78rem;margin-bottom:16px">Semana del 15–21 de Noviembre</p>
-      <div class="line-chart-container">
-        <div class="y-labels"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div>
-        <div class="line-chart-area">
-          <svg viewBox="0 0 700 160" preserveAspectRatio="none" style="width:100%;height:160px">
-            <defs><linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF5722" stop-opacity="0.3"/><stop offset="100%" stop-color="#FF5722" stop-opacity="0"/></linearGradient></defs>
-            <path d="M0,6 L100,0 L200,8 L300,0 L400,4 L500,2 L600,0 L700,0" fill="url(#lg1)" stroke="none"/>
-            <path d="M0,6 L100,0 L200,8 L300,0 L400,4 L500,2 L600,0 L700,0" fill="none" stroke="var(--ember)" stroke-width="2.5"/>
-            <circle *ngFor="let d of chartData; let i=index" [attr.cx]="i*(700/6)" [attr.cy]="(100-d.v)/100*160" r="4" fill="var(--ember)" stroke="var(--ash-2)" stroke-width="2"/>
-          </svg>
-        </div>
-      </div>
-      <div class="x-labels"><span *ngFor="let d of chartData">{{ d.f }}</span></div>
-    </div>
-    <div class="card card-padded mb-16">
-      <p style="font-weight:700;font-family:Rajdhani,sans-serif;font-size:1rem;margin-bottom:16px">Estado del Servicio</p>
-      <div class="four-cols" style="margin-bottom:0">
-        <div class="srv-stat"><span>Estado API</span><span class="badge b-ok">{{ servicio.estado }}</span></div>
-        <div class="srv-stat"><span>Uptime</span><strong class="ok-text">{{ servicio.uptime }}</strong></div>
-        <div class="srv-stat"><span>Solicitudes</span><strong>{{ servicio.solicitudes }}</strong></div>
-        <div class="srv-stat"><span>T. Respuesta</span><strong class="info-text">{{ servicio.respuesta }}</strong></div>
-      </div>
-    </div>
-    <div class="card card-padded mb-16">
-      <p style="font-weight:700;font-family:Rajdhani,sans-serif;font-size:1rem;margin-bottom:16px">Métricas del Sistema</p>
-      <div class="recursos-list">
-        <div *ngFor="let r of recursos" class="prog-wrap"><div class="prog-head"><span>{{ r.label }}</span><span>{{ r.valor }}%</span></div><div class="prog-bg"><div class="prog-fill" [style.width]="r.valor+'%'" [style.background]="r.color"></div></div></div>
-      </div>
-    </div>
-    <div class="card card-padded">
-      <div class="sec-head compact"><p style="font-weight:700;font-family:Rajdhani,sans-serif;font-size:1rem">Configuración de Métricas</p><button class="btn-ghost" (click)="editingMetrics=!editingMetrics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>{{ editingMetrics ? 'Guardar' : 'Editar' }}</button></div>
-      <div class="two-cols">
-        <div class="field"><label>Precisión Objetivo (%)</label><input type="number" [(ngModel)]="metricConfig.precision" [disabled]="!editingMetrics" /></div>
-        <div class="field"><label>Tiempo Máximo de Respuesta (s)</label><input type="number" [(ngModel)]="metricConfig.respuesta" [disabled]="!editingMetrics" /></div>
-        <div class="field"><label>Confianza Mínima (0-1)</label><input type="number" [(ngModel)]="metricConfig.confianza" [disabled]="!editingMetrics" step="0.01" /></div>
-        <div class="field"><label>Máx. Falsos Positivos (por semana)</label><input type="number" [(ngModel)]="metricConfig.falsos" [disabled]="!editingMetrics" /></div>
-      </div>
-    </div>
-  </ng-container>
+  </div>
 
-</app-shell>
+  <div class="four-cols mb-20">
+    <div class="stat-card">
+      <div class="sc-val ok-text">{{ modelAccuracy }}%</div>
+      <div class="sc-label">Accuracy</div>
+    </div>
 
+    <div class="stat-card">
+      <div class="sc-val info-text">{{ modelPrecision }}%</div>
+      <div class="sc-label">Precision</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="sc-val ember-text">{{ modelRecall }}%</div>
+      <div class="sc-label">Recall</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="sc-val warn-text">{{ modelF1 }}%</div>
+      <div class="sc-label">F1 Score</div>
+    </div>
+  </div>
+
+  <div class="four-cols mb-20">
+    <div class="stat-card">
+      <div class="sc-val">{{ perf.detecciones }}</div>
+      <div class="sc-label">Total de análisis</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="sc-val">{{ perf.falsos }}</div>
+      <div class="sc-label">Errores de clasificación</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="sc-val">{{ modelTotalImagenes }}</div>
+      <div class="sc-label">Imágenes evaluadas</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="sc-val">{{ modelTiempoRespuesta }}</div>
+      <div class="sc-label">Tiempo de respuesta</div>
+    </div>
+  </div>
+
+  <div class="card card-padded mb-16">
+    <p style="font-weight:700;font-family:Rajdhani,sans-serif;font-size:1rem;margin-bottom:16px">
+      Matriz de Confusión
+    </p>
+
+    <table class="metrics-table" *ngIf="matrizConfusion.length">
+      <thead>
+        <tr>
+          <th>Real / Predicho</th>
+          <th *ngFor="let label of metricLabels">{{ label }}</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let row of matrizConfusion; let i = index">
+          <th>{{ metricLabels[i] }}</th>
+          <td 
+            *ngFor="let value of row; let j = index"
+            [class.correct-cell]="i === j"
+            [class.error-cell]="i !== j && value > 0"
+          >
+            {{ value }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="muted-text" *ngIf="!matrizConfusion.length">
+      No hay matriz de confusión disponible.
+    </p>
+  </div>
+</ng-container>
 <!-- ═══════════════════════════════════════════
      MODAL — NUEVO USUARIO GUBERNAMENTAL
 ═══════════════════════════════════════════ -->
@@ -473,5 +505,35 @@
       </button>
     </div>
 
+  </div>
+</div>
+
+
+<div class="modal-backdrop" *ngIf="showDeleteModal">
+  <div class="confirm-modal">
+    <div class="modal-icon danger">
+      🗑️
+    </div>
+
+    <h3>Eliminar usuario</h3>
+
+    <p>
+      ¿Seguro que deseas eliminar a
+      <strong>{{ userToDelete?.nombre }}</strong>?
+    </p>
+
+    <p class="modal-warning">
+      Esta acción no se puede deshacer.
+    </p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" (click)="cancelDeleteUser()">
+        Cancelar
+      </button>
+
+      <button type="button" class="btn-danger" (click)="confirmDeleteUser()">
+        Eliminar
+      </button>
+    </div>
   </div>
 </div>

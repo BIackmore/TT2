@@ -1,4 +1,5 @@
 import os
+import time
 import shutil
 import uuid
 from flask import Flask, request, jsonify
@@ -55,6 +56,30 @@ def analizar():
         print(f"Error en IA: {e}")
         return jsonify({"status": "error", "mensaje": str(e)}), 500
 
+
+@app.route('/metricas-modelo', methods=['GET'])
+def metricas_modelo():
+    try:
+        dir_test = os.path.join(os.path.dirname(__file__), "Dataset", "test")
+
+        if not os.path.exists(dir_test):
+            return jsonify({
+                "status": "error",
+                "mensaje": "No existe la carpeta Dataset/test para calcular la matriz de confusión."
+            }), 404
+
+        inicio = time.time()
+        metricas = modelo_cnn.evaluar_y_metricas(dir_test)
+        tiempo = round(time.time() - inicio, 2)
+
+        metricas["status"] = "ok"
+        metricas["tiempo_respuesta"] = tiempo
+
+        return jsonify(metricas)
+
+    except Exception as e:
+        print(f"Error calculando métricas del modelo: {e}")
+        return jsonify({"status": "error", "mensaje": str(e)}), 500
 if __name__ == '__main__':
     # El servidor de IA escuchará en el puerto 5000
-    app.run(port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False)

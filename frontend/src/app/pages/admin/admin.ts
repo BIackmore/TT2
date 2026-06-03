@@ -11,6 +11,8 @@ import {
   PlatformImage,
   PlatformReport,
   PlatformUser,
+  AnalysisStats,
+  ModelMetrics
 } from '../../api/platform-api.service';
 import { ShellComponent, NavItem } from '../../shared/shell/shell';
 import { FilterByPipe } from '../../shared/pipes/filter-by.pipe';
@@ -26,6 +28,8 @@ import { ExportService } from '../../services/export.service';
 })
 export class AdminComponent implements OnInit {
   activeTab = 'usuarios';
+  showDeleteModal = false;
+  userToDelete: UserProfile | null = null;
 
   navItems: NavItem[] = [
     {
@@ -123,8 +127,10 @@ export class AdminComponent implements OnInit {
       images: this.platformApi.getImages({ limit: 100 }),
       reports: this.platformApi.getReports({ limit: 100 }),
       bitacoras: this.platformApi.getBitacoras({ limit: 100 }),
+      stats: this.platformApi.getAnalysisStats(),
+      modelMetrics: this.platformApi.getModelMetrics(),
     }).subscribe({
-      next: ({ users, images, reports, bitacoras }) => {
+      next: ({ users, images, reports, bitacoras, stats, modelMetrics }) => {
         this.loading = false;
         this.rawUsers = users.data;
         this.rawImages = images.data;
@@ -135,6 +141,8 @@ export class AdminComponent implements OnInit {
         this.reportes = this.rawReports.map((report) => this.mapReport(report));
         this.historialActividad = this.rawBitacoras.map((entry) => this.mapBitacora(entry));
         this.zonas = this.buildZones(this.rawImages);
+        this.applyStats(stats.data);
+        this.applyModelMetrics(modelMetrics.data);
       },
       error: () => {
         this.loading = false;
@@ -225,41 +233,75 @@ export class AdminComponent implements OnInit {
         cargo: g.cargo,
         telefono: g.telefono,
       })
-      .subscribe((result) => {
-        this.savingModal = false;
-        if (!result.ok) {
-          this.modalError = result.error || 'Error al guardar.';
-          return;
-        }
-        this.modalOk = true;
-        this.loadAdminData();
-        setTimeout(() => {
-          this.showModal = false;
-          this.modalOk = false;
-        }, 2000);
-      });
-  }
+      .subscribe({
+  next: (result) => {
+    this.savingModal = false;
 
-  deleteUser(correo: string) {
-    const user = this.users.find((item) => item.correo === correo);
-    if (!user?.id_usuario) {
+    if (!result.ok) {
+      this.modalError = result.error || 'Error al guardar.';
       return;
     }
 
-    if (confirm('¿Eliminar este usuario?')) {
-      this.platformApi.deleteUser(user.id_usuario).subscribe({
-        next: () => this.loadAdminData(),
-        error: () => {
-          this.error = 'No se pudo eliminar el usuario.';
-        },
-      });
+    this.modalOk = true;
+    this.loadAdminData();
+
+    setTimeout(() => {
+      this.showModal = false;
+      this.modalOk = false;
+    }, 2000);
+  },
+  error: (err) => {
+    this.savingModal = false;
+    this.modalOk = false;
+
+    if (err.status === 409) {
+      this.modalError =
+        err.error?.error || 'Ya existe un usuario con ese correo o número de trabajador.';
+      return;
     }
+
+    this.modalError =
+      err.error?.error || 'No se pudo registrar el usuario gubernamental.';
+  },
+});
   }
 
+  deleteUser(correo: string) {
+  const user = this.users.find((item) => item.correo === correo);
+  if (!user?.id_usuario) return;
+
+  this.userToDelete = user;
+  this.showDeleteModal = true;
+  }
+
+
+  cancelDeleteUser() {
+  this.showDeleteModal = false;
+  this.userToDelete = null;
+}
+
+confirmDeleteUser() {
+  if (!this.userToDelete?.id_usuario) return;
+
+  this.platformApi.deleteUser(this.userToDelete.id_usuario).subscribe({
+    next: () => {
+      this.showDeleteModal = false;
+      this.userToDelete = null;
+      this.loadAdminData();
+    },
+    error: () => {
+      this.error = 'No se pudo eliminar el usuario.';
+      this.showDeleteModal = false;
+      this.userToDelete = null;
+    },
+  });
+}
   toggleEstado(u: UserProfile) {
     if (!u.id_usuario) {
       return;
     }
+
+    
 
     this.platformApi.toggleUserStatus(u.id_usuario).subscribe({
       next: ({ activo }) => {
@@ -354,15 +396,16 @@ export class AdminComponent implements OnInit {
     },
   ];
   perf = { precision: 95.2, respuesta: '1.8s', detecciones: 342, falsos: 17 };
-  chartData = [
-    { f: '15 Nov', v: 97 },
-    { f: '16 Nov', v: 100 },
-    { f: '17 Nov', v: 96 },
-    { f: '18 Nov', v: 100 },
-    { f: '19 Nov', v: 98 },
-    { f: '20 Nov', v: 99 },
-    { f: '21 Nov', v: 100 },
-  ];
+  matrizConfusion: number[][] = [];
+  metricLabels: string[] = ['Bajo', 'Medio', 'Alto'];
+  modelAccuracy = 0;
+  modelPrecision = 0;
+  modelRecall = 0;
+  modelF1 = 0;
+  modelTotalImagenes = 0;
+  modelTiempoRespuesta = '0s';
+
+  chartData: any[] = [];
   barData = [
     { f: '15 Nov', det: 45, fp: 2 },
     { f: '16 Nov', det: 52, fp: 3 },
@@ -372,15 +415,11 @@ export class AdminComponent implements OnInit {
     { f: '20 Nov', det: 55, fp: 2 },
     { f: '21 Nov', det: 42, fp: 1 },
   ];
-  servicio = { estado: 'Operacional', uptime: '99.8%', solicitudes: '45,231', respuesta: '142ms' };
-  recursos = [
-    { label: 'Uso de CPU', valor: 42, color: 'var(--ember)' },
-    { label: 'Uso de Memoria', valor: 68, color: 'var(--warn)' },
-    { label: 'Uso de Disco', valor: 54, color: 'var(--ok)' },
-  ];
+  servicio: any = null;
+  recursos: any[] = [];
   metricConfig = { precision: 95, respuesta: 2.5, confianza: 0.85, falsos: 5 };
   editingMetrics = false;
-
+  
   private mapUser(user: PlatformUser): UserProfile {
     const profile = user.perfil ?? {};
 
@@ -483,4 +522,43 @@ export class AdminComponent implements OnInit {
   private capitalize(value: string): string {
     return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
   }
+
+
+  private applyStats(stats: AnalysisStats) {
+  this.perf.detecciones = Number(stats.total_analisis ?? 0);
+  this.perf.precision = Number(stats.precision_promedio ?? 0);
+}
+
+private applyModelMetrics(metrics: ModelMetrics) {
+  if (!metrics || metrics.status === 'error') {
+    this.matrizConfusion = [];
+    this.metricLabels = ['Bajo', 'Medio', 'Alto'];
+
+    this.modelAccuracy = 0;
+    this.modelPrecision = 0;
+    this.modelRecall = 0;
+    this.modelF1 = 0;
+    this.modelTotalImagenes = 0;
+    this.modelTiempoRespuesta = '0s';
+    this.perf.falsos = 0;
+    return;
+  }
+
+  this.modelAccuracy = Number(metrics.accuracy ?? 0);
+  this.modelPrecision = Number(metrics.precision ?? 0);
+  this.modelRecall = Number(metrics.recall ?? 0);
+  this.modelF1 = Number(metrics.f1 ?? 0);
+  this.modelTotalImagenes = Number(metrics.total_imagenes ?? 0);
+  this.modelTiempoRespuesta = `${metrics.tiempo_respuesta ?? 0}s`;
+
+  this.matrizConfusion = metrics.matriz_confusion ?? [];
+  this.metricLabels = metrics.labels ?? ['Bajo', 'Medio', 'Alto'];
+
+  this.perf.precision = this.modelPrecision;
+  this.perf.respuesta = this.modelTiempoRespuesta;
+
+  this.perf.falsos = this.matrizConfusion.reduce((total, row, i) => {
+    return total + row.reduce((sum, value, j) => sum + (i !== j ? value : 0), 0);
+  }, 0);
+}
 }

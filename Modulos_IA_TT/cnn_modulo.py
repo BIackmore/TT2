@@ -1,4 +1,11 @@
-import cupy as cp
+try:
+    import cupy as cp
+    GPU_DISPONIBLE = True
+    print("CuPy disponible: usando GPU.")
+except ImportError:
+    import numpy as cp
+    GPU_DISPONIBLE = False
+    print("CuPy no disponible: usando NumPy en CPU.")
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -88,7 +95,11 @@ class Conv2D:
         self.s = stride
         self.p = padding
         self.name = "Conv2D"
-        self.W = cp.random.randn(out_channels, in_channels, kernel_size, kernel_size, dtype=cp.float32) * cp.sqrt(2. / (in_channels * kernel_size**2))
+        self.W = (
+        cp.random.randn(out_channels, in_channels, kernel_size, kernel_size)
+        .astype(cp.float32)
+        * cp.sqrt(2. / (in_channels * kernel_size**2))
+        )
         self.b = cp.zeros((out_channels, 1), dtype=cp.float32)
         
     def _im2col(self, X):
@@ -163,7 +174,11 @@ class MaxPool2D:
 
 class Dense:
     def __init__(self, input_size, output_size):
-        self.W = cp.random.randn(output_size, input_size, dtype=cp.float32) * cp.sqrt(2. / input_size)
+        self.W = (
+        cp.random.randn(output_size, input_size)
+        .astype(cp.float32)
+        * cp.sqrt(2. / input_size)
+        )
         self.b = cp.zeros((output_size, 1), dtype=cp.float32)
         self.name = "Dense"
         
@@ -365,11 +380,16 @@ class RedIncendios:
         print(f"Recall:    {rec*100:.2f}%")
         print(f"F1-Score:  {f1*100:.2f}%")
         
-        cm = confusion_matrix(y_trues, y_preds)
-        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["Bajo", "Medio", "Alto"])
-        disp.plot(cmap=plt.cm.Oranges)
-        plt.title("Matriz de Confusion")
-        plt.show()
+        cm = confusion_matrix(y_trues, y_preds, labels=[0, 1, 2])
+        return {
+        "accuracy": round(acc * 100, 2),
+        "precision": round(prec * 100, 2),
+        "recall": round(rec * 100, 2),
+        "f1": round(f1 * 100, 2),
+        "matriz_confusion": cm.tolist(),
+        "labels": ["Bajo", "Medio", "Alto"],
+        "total_imagenes": len(X_test)
+        }
 
     def predecir_solo_visual(self, image_path, target_size=224):
         img_array_np = resize_and_crop(image_path, target_size)

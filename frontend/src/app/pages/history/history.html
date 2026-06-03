@@ -47,7 +47,7 @@
             <td>{{ analysis.usuario }}</td>
             <td><span class="badge" [class]="getBadgeClass(analysis.nivel_riesgo)">{{ analysis.nivel_riesgo }}</span></td>
             <td>{{ analysis.porcentaje_afectacion }}%</td>
-            <td class="muted-text">{{ analysis.fecha }}</td>
+            <td class="muted-text">{{ formatDate(analysis.fecha) }}</td>
           </tr>
         </tbody>
       </table>

@@ -177,36 +177,37 @@ const getAll = async (req: Request, res: Response, next: NextFunction) => {
     const where = filtros.length ? `WHERE ${filtros.join(" AND ")}` : "";
 
     const { rows } = await query(
-      `SELECT
-         i.id_imagen, i.uuid,
-         i.nombre_archivo                                           AS nombre,
-         i.ruta_archivo,
-         u.nombre                                                   AS usuario,
-         ST_X(i.geom) AS lng,
-         ST_Y(i.geom) AS lat,
-         a.resultado_json->>'zona'                                  AS zona,
-         LOWER(nr.clave)                                            AS nivel_riesgo,
-         nr.color_hex,
-         ROUND((a.umbral_confianza*100)::numeric)                   AS confianza,
-         i.resolucion_width || 'x' || i.resolucion_height           AS resolucion,
-         ROUND((i.tamano_bytes/1048576.0)::numeric,1) || ' MB'      AS tamano,
-         TO_CHAR(i.fecha_carga,'DD/MM/YYYY')                        AS fecha,
-         a.id_analisis,
-         a.id_riesgo,
-         a.porcentaje_afectacion,
-         a.riesgo_visual,
-         a.riesgo_climatico,
-         i.resolucion_width,
-         i.resolucion_height,
-         i.tamano_bytes
-        FROM imagenes i
-        JOIN usuarios u             ON u.id_usuario = i.id_usuario
-        JOIN analisis a             ON a.id_imagen  = i.id_imagen
-        LEFT JOIN niveles_riesgo nr ON nr.id_riesgo = a.id_riesgo
-        ${where}
-        ORDER BY i.fecha_carga DESC
-        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
-      [...params, limitNumber, offset]
+     `SELECT
+  i.id_imagen,
+  i.uuid,
+  i.nombre_archivo AS nombre,
+  i.ruta_archivo,
+  u.nombre AS usuario,
+  ST_X(i.geom) AS lng,
+  ST_Y(i.geom) AS lat,
+  a.resultado_json->>'zona' AS zona,
+  LOWER(nr.clave) AS nivel_riesgo,
+  nr.color_hex,
+  ROUND((a.umbral_confianza*100)::numeric) AS confianza,
+  i.resolucion_width || 'x' || i.resolucion_height AS resolucion,
+  ROUND((i.tamano_bytes/1048576.0)::numeric,1) || ' MB' AS tamano,
+  TO_CHAR(i.fecha_carga,'DD/MM/YYYY') AS fecha,
+  a.id_analisis,
+  a.id_riesgo,
+  a.porcentaje_afectacion,
+  a.riesgo_visual,
+  a.riesgo_climatico,
+  i.resolucion_width,
+  i.resolucion_height,
+  i.tamano_bytes
+FROM imagenes i
+JOIN usuarios u ON u.id_usuario = i.id_usuario
+JOIN analisis a ON a.id_imagen = i.id_imagen
+LEFT JOIN niveles_riesgo nr ON nr.id_riesgo = a.id_riesgo
+${where}
+ORDER BY i.fecha_carga DESC
+LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+[...params, limitNumber, offset]
     );
 
     const { rows: countRows } = await query(
