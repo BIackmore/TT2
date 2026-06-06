@@ -105,7 +105,6 @@ export class AdminComponent implements OnInit {
     confirmPassword: '',
     organizacion: '',
     numTrabajador: '',
-    dependencia: '',
     cargo: '',
     telefono: '',
   };
@@ -176,7 +175,6 @@ export class AdminComponent implements OnInit {
       confirmPassword: '',
       organizacion: '',
       numTrabajador: '',
-      dependencia: '',
       cargo: '',
       telefono: '',
     };
@@ -190,81 +188,93 @@ export class AdminComponent implements OnInit {
   }
 
   guardarGov() {
-    this.modalError = '';
-    const g = this.nuevoGov;
+  this.modalError = '';
+  this.modalOk = false;
 
-    if (
-      !g.nombre ||
-      !g.correo ||
-      !g.password ||
-      !g.confirmPassword ||
-      !g.organizacion ||
-      !g.numTrabajador ||
-      !g.dependencia ||
-      !g.cargo
-    ) {
-      this.modalError = 'Todos los campos marcados con * son obligatorios.';
-      return;
-    }
-    if (g.password.length < 6) {
-      this.modalError = 'La contraseña debe tener al menos 6 caracteres.';
-      return;
-    }
-    if (g.password !== g.confirmPassword) {
-      this.modalError = 'Las contraseñas no coinciden.';
-      return;
-    }
-    const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRx.test(g.correo)) {
-      this.modalError = 'El formato del correo no es válido.';
-      return;
-    }
+  const g = this.nuevoGov;
 
-    this.savingModal = true;
+  const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$/;
+  const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    this.auth
-      .registerGov({
-        nombre: g.nombre,
-        correo: g.correo,
-        password: g.password,
-        organizacion: g.organizacion,
-        numTrabajador: g.numTrabajador,
-        dependencia: g.dependencia,
-        cargo: g.cargo,
-        telefono: g.telefono,
-      })
-      .subscribe({
-  next: (result) => {
-    this.savingModal = false;
-
-    if (!result.ok) {
-      this.modalError = result.error || 'Error al guardar.';
-      return;
-    }
-
-    this.modalOk = true;
-    this.loadAdminData();
-
-    setTimeout(() => {
-      this.showModal = false;
-      this.modalOk = false;
-    }, 2000);
-  },
-  error: (err) => {
-    this.savingModal = false;
-    this.modalOk = false;
-
-    if (err.status === 409) {
-      this.modalError =
-        err.error?.error || 'Ya existe un usuario con ese correo o número de trabajador.';
-      return;
-    }
-
-    this.modalError =
-      err.error?.error || 'No se pudo registrar el usuario gubernamental.';
-  },
-});
+  if (
+    !g.nombre ||
+    !g.correo ||
+    !g.password ||
+    !g.confirmPassword ||
+    !g.organizacion ||
+    !g.numTrabajador ||
+    !g.cargo
+  ) {
+    this.modalError = 'Todos los campos marcados con * son obligatorios.';
+    return;
   }
+
+  if (!nombreRegex.test(g.nombre.trim())) {
+    this.modalError = 'El nombre solo puede contener letras y espacios.';
+    return;
+  }
+
+  if (!passwordRegex.test(g.password)) {
+    this.modalError =
+      'La contraseña debe tener mínimo 6 caracteres, una mayúscula y un carácter especial.';
+    return;
+  }
+
+  if (g.password !== g.confirmPassword) {
+    this.modalError = 'Las contraseñas no coinciden.';
+    return;
+  }
+
+  if (!emailRx.test(g.correo)) {
+    this.modalError = 'El formato del correo no es válido.';
+    return;
+  }
+
+  this.savingModal = true;
+
+  this.auth
+    .registerGov({
+      nombre: g.nombre,
+      correo: g.correo,
+      password: g.password,
+      organizacion: g.organizacion,
+      numTrabajador: g.numTrabajador,
+      cargo: g.cargo,
+      telefono: g.telefono,
+    })
+    .subscribe({
+      next: (result) => {
+        this.savingModal = false;
+
+        if (!result.ok) {
+          this.modalError = result.error || 'Error al guardar.';
+          return;
+        }
+
+        this.modalOk = true;
+        this.loadAdminData();
+
+        setTimeout(() => {
+          this.showModal = false;
+          this.modalOk = false;
+        }, 2000);
+      },
+      error: (err) => {
+        this.savingModal = false;
+        this.modalOk = false;
+
+        if (err.status === 409) {
+          this.modalError =
+            err.error?.error || 'Ya existe un usuario con ese correo o número de trabajador.';
+          return;
+        }
+
+        this.modalError =
+          err.error?.error || 'No se pudo registrar el usuario gubernamental.';
+      },
+    });
+}
 
   deleteUser(correo: string) {
   const user = this.users.find((item) => item.correo === correo);

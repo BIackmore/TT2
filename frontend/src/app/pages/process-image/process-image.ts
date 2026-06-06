@@ -22,7 +22,35 @@ export class ProcessImageComponent implements OnInit, OnDestroy {
   resultadoVisible = false;
   queuedItems: QueuedImage[] = [];
   error = '';
-  private onlineHandler = () => this.refreshQueue();
+
+
+
+  isOnline = navigator.onLine;
+
+private offlineHandler = () => {
+  this.isOnline = false;
+  this.cdr.detectChanges();
+};
+
+private onlineHandler = async () => {
+  this.isOnline = true;
+
+  const response = await this.offlineQ.processQueue();
+  await this.refreshQueue();
+
+  if (response) {
+    this.loading = false;
+    this.resultadoVisible = true;
+
+    this.preview = response.originalBase64 || this.preview;
+    this.applyResult(response.result);
+
+    this.error = '';
+  }
+
+  this.cdr.detectChanges();
+};
+
 
   // --- NUEVAS VARIABLES DE IA ---
   mapImage: string | null = null;
@@ -45,21 +73,54 @@ export class ProcessImageComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit() { this.refreshQueue(); window.addEventListener('online', this.onlineHandler); }
-  ngOnDestroy() { window.removeEventListener('online', this.onlineHandler); }
+  ngOnInit() {
+  this.isOnline = navigator.onLine;
+  this.refreshQueue();
+
+  window.addEventListener('online', this.onlineHandler);
+  window.addEventListener('offline', this.offlineHandler);
+}
+
+ngOnDestroy() {
+  window.removeEventListener('online', this.onlineHandler);
+  window.removeEventListener('offline', this.offlineHandler);
+}
 
   async refreshQueue() { this.queuedItems = await this.offlineQ.getAllItems(); }
-
+  
   onFileSelected(event: Event) {
-    const f = (event.target as HTMLInputElement).files?.[0];
-    if (f) this.setFile(f);
+    const input = event.target as HTMLInputElement;
+    const f = input.files?.[0];
+
+    if (!f) return;
+
+      const formatosPermitidos = ['image/png', 'image/jpeg'];
+
+    if (!formatosPermitidos.includes(f.type)) {
+      this.error = 'Solo se permiten imágenes PNG, JPG o JPEG.';
+      input.value = '';
+      return;
+    }
+
+    this.setFile(f);
   }
 
   onDrop(e: DragEvent) {
-    e.preventDefault(); this.isDragging = false;
-    const f = e.dataTransfer?.files[0];
-    if (f?.type.startsWith('image/')) this.setFile(f);
+  e.preventDefault();
+  this.isDragging = false;
+
+  const f = e.dataTransfer?.files[0];
+  if (!f) return;
+
+  const formatosPermitidos = ['image/png', 'image/jpeg'];
+
+  if (!formatosPermitidos.includes(f.type)) {
+    this.error = 'Solo se permiten imágenes PNG, JPG o JPEG.';
+    return;
   }
+
+  this.setFile(f);
+}
 
   onDragOver(e: DragEvent) { e.preventDefault(); this.isDragging = true; }
   onDragLeave() { this.isDragging = false; }
@@ -74,18 +135,26 @@ export class ProcessImageComponent implements OnInit, OnDestroy {
   }
 
   async analyze() {
+    console.log('navigator.onLine:', navigator.onLine);
+console.log('offlineQ.isOnline:', this.offlineQ.isOnline);
     if (!this.selectedFile) return;
     this.loading = true;
     this.resultadoVisible = false;
     this.error = '';
 
-    if (!this.offlineQ.isOnline) {
-      await this.offlineQ.enqueueImage(this.selectedFile, this.auth.getUser()?.correo);
-      await this.refreshQueue();
-      this.loading = false;
-      this.reset();
-      return;
-    }
+    if (!navigator.onLine) {
+  const fileToQueue = this.selectedFile;
+
+  await this.offlineQ.enqueueImage(fileToQueue, this.auth.getUser()?.correo);
+  await this.refreshQueue();
+
+  this.loading = false;
+  this.reset();
+  this.error = 'Sin conexión. La imagen se guardó en la cola offline.';
+  this.cdr.detectChanges();
+
+  return;
+}
 
     this.platformApi.uploadImage(this.selectedFile).subscribe({
       next: (response) => {
@@ -95,21 +164,27 @@ export class ProcessImageComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.loading = false;
+  this.loading = false;
 
-        // 1. Extraemos el mensaje de error EXACTO que nos devolvió Node.js
-        const errorMessage = err.error?.error || 'No se pudo procesar la imagen. Intenta de nuevo.';
+  if (err.status === 0 && this.selectedFile) {
+    const fileToQueue = this.selectedFile;
 
-        // 2. Llama a tu función reset() para limpiar la imagen, el preview y las métricas de la interfaz visual
-        this.reset();
+    this.offlineQ.enqueueImage(fileToQueue, this.auth.getUser()?.correo).then(async () => {
+      await this.refreshQueue();
+      this.reset();
+      this.error = 'Sin conexión. La imagen se guardó en la cola offline.';
+      this.cdr.detectChanges();
+    });
 
-        // 3. Volvemos a colocar el mensaje de error (ya que el reset() lo había limpiado)
-        // para que aparezca el banner rojo en la parte superior.
-        this.error = errorMessage;
+    return;
+  }
 
-        // 4. Forzamos la actualización visual
-        this.cdr.detectChanges();
-      },
+  const errorMessage = err.error?.error || 'No se pudo procesar la imagen. Intenta de nuevo.';
+
+  this.reset();
+  this.error = errorMessage;
+  this.cdr.detectChanges();
+},
     });
   }
 

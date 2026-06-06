@@ -29,30 +29,43 @@ export class RegisterComponent {
   ) {}
 
   onSubmit() {
-    this.error = '';
-    if (!this.name || !this.email || !this.password || !this.confirmPassword) {
-      this.error = 'Completa todos los campos requeridos.';
-      return;
-    }
-    if (this.password.length < 6) {
-      this.error = 'La contraseña debe tener al menos 6 caracteres.';
-      return;
-    }
-    if (this.password !== this.confirmPassword) {
-      this.error = 'Las contraseñas no coinciden.';
-      return;
-    }
-    this.loading = true;
+  this.error = '';
 
-    this.auth.register(this.name, this.email, this.password).subscribe({
-      next: () => {
-        this.loading = false;
-        this.router.navigate(['/home']);
-      },
-      error: () => {
-        this.loading = false;
-        this.error = 'No se pudo registrar la cuenta.';
-      },
-    });
+  const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>+\-]).{6,}$/;
+
+  if (!this.name || !this.email || !this.password || !this.confirmPassword) {
+    this.error = 'Completa todos los campos requeridos.';
+    return;
   }
+
+  if (!nombreRegex.test(this.name.trim())) {
+    this.error = 'El nombre solo puede contener letras y espacios.';
+    return;
+  }
+
+  if (!passwordRegex.test(this.password)) {
+    this.error =
+      'La contraseña debe tener mínimo 6 caracteres, una mayúscula y un carácter especial.';
+    return;
+  }
+
+  if (this.password !== this.confirmPassword) {
+    this.error = 'Las contraseñas no coinciden.';
+    return;
+  }
+
+  this.loading = true;
+
+  this.auth.register(this.name, this.email, this.password).subscribe({
+    next: () => {
+      this.loading = false;
+      this.router.navigate(['/home']);
+    },
+    error: () => {
+      this.loading = false;
+      this.error = 'No se pudo registrar la cuenta.';
+    },
+  });
+}
 }

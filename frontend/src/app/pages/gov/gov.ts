@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -17,7 +17,7 @@ import { OfflineQueueService } from '../../services/offline-queue.service';
   templateUrl: './gov.html',
   styleUrl: './gov.scss'
 })
-export class GovComponent implements OnInit {
+export class GovComponent implements OnInit, OnDestroy {
   activeTab = 'procesar';
   loading = false;
   error = '';
@@ -41,7 +41,32 @@ export class GovComponent implements OnInit {
   loadingProcess = false;
   resultadoVisible = false;
   errorProcess = '';
+  isOnline = navigator.onLine;
 
+private offlineHandler = () => {
+  this.isOnline = false;
+  this.cdr.detectChanges();
+};
+
+private onlineHandler = async () => {
+  this.isOnline = true;
+
+  const response = await this.offlineQ.processQueue();
+
+  this.loadDashboardData();
+
+  if (response) {
+    this.loadingProcess = false;
+    this.resultadoVisible = true;
+
+    this.preview = response.originalBase64 || this.preview;
+    this.applyResult(response.result);
+
+    this.errorProcess = '';
+  }
+
+  this.cdr.detectChanges();
+};
   mapImage: string | null = null;
   finalClass = 'Alto';
   generalRisk = 0;
@@ -60,12 +85,21 @@ export class GovComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.isOnline = navigator.onLine;
+
+  window.addEventListener('online', this.onlineHandler);
+  window.addEventListener('offline', this.offlineHandler);
     if (!this.auth.getUser()) {
       this.router.navigate(['/login']);
       return;
     }
     this.loadDashboardData();
   }
+
+  ngOnDestroy() {
+  window.removeEventListener('online', this.onlineHandler);
+  window.removeEventListener('offline', this.offlineHandler);
+}
 
   // 3. GETTER QUE FILTRA LAS IMÁGENES SEGÚN TU BARRA DE BÚSQUEDA (Evita el error 'filteredImagenes')
   get filteredImagenes() {
@@ -191,8 +225,20 @@ export class GovComponent implements OnInit {
 
   // ═══ LÓGICA DE PROCESAR IMAGEN Y PDFs (INTACTA Y FUNCIONAL) ═══
   onFileSelected(event: Event) {
-    const f = (event.target as HTMLInputElement).files?.[0];
-    if (f) this.setFile(f);
+    const input = event.target as HTMLInputElement;
+    const f = input.files?.[0];
+
+    if (!f) return;
+
+      const formatosPermitidos = ['image/png', 'image/jpeg'];
+
+    if (!formatosPermitidos.includes(f.type)) {
+      this.error = 'Solo se permiten imágenes PNG, JPG o JPEG.';
+      input.value = '';
+      return;
+    }
+
+    this.setFile(f);
   }
 
   onDrop(e: DragEvent) {
@@ -233,27 +279,57 @@ export class GovComponent implements OnInit {
     this.resultadoVisible = false;
     this.errorProcess = '';
 
-    if (!this.offlineQ.isOnline) {
-      await this.offlineQ.enqueueImage(this.selectedFile, this.auth.getUser()?.correo);
-      this.loadingProcess = false;
-      this.reset();
-      return;
-    }
+    if (!navigator.onLine) {
+  await this.offlineQ.enqueueImage(
+    this.selectedFile,
+    this.auth.getUser()?.correo
+  );
+
+  this.loadingProcess = false;
+  this.reset();
+
+  this.errorProcess =
+    'Sin conexión. La imagen se guardó localmente y se analizará al recuperar conexión.';
+
+  this.cdr.detectChanges();
+  return;
+}
 
     this.platformApi.uploadImage(this.selectedFile).subscribe({
       next: (response: any) => {
-        this.loadingProcess = false;
-        this.resultadoVisible = true;
-        this.applyResult(response);
-        this.cdr.detectChanges();
-      },
+    this.loadingProcess = false;
+    this.resultadoVisible = true;
+    this.applyResult(response);
+
+    this.loadDashboardData();
+
+    this.cdr.detectChanges();
+    },
       error: (err: any) => {
-        this.loadingProcess = false;
-        const errorMessage = err.error?.error || 'No se pudo procesar la imagen. Intenta de nuevo.';
-        this.reset();
-        this.errorProcess = errorMessage;
-        this.cdr.detectChanges();
-      },
+  this.loadingProcess = false;
+
+  if (err.status === 0 && this.selectedFile) {
+    const fileToQueue = this.selectedFile;
+
+    this.offlineQ.enqueueImage(fileToQueue, this.auth.getUser()?.correo).then(async () => {
+      this.reset();
+
+      this.errorProcess =
+        'Sin conexión. La imagen se guardó localmente y se analizará al recuperar conexión.';
+
+      this.cdr.detectChanges();
+    });
+
+    return;
+  }
+
+  const errorMessage =
+    err.error?.error || 'No se pudo procesar la imagen. Intenta de nuevo.';
+
+  this.reset();
+  this.errorProcess = errorMessage;
+  this.cdr.detectChanges();
+},
     });
   }
 

@@ -32,8 +32,8 @@ const audit = async ({
       ]
     );
   } catch (err: any) {
-    console.error("[AUDIT ERROR]", (err?.message as string) || "");
-  }
+  console.error("[AUDIT ERROR]", err);
+}
 };
 
 export { audit };

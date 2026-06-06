@@ -82,7 +82,7 @@
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
               Seleccionar archivo
-              <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+              <input #fileInput type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" (change)="onFileSelected($event)" hidden />
             </label>
             <span class="file-name">{{ selectedFile ? selectedFile.name : 'ningún archivo seleccionado' }}</span>
           </div>
@@ -123,13 +123,13 @@
               </svg>
             </div>
             <p class="empty-title">Esperando imagen para analizar...</p>
-            <p class="empty-sub">El resultado de la IA aparecerá aquí</p>
+            <p class="empty-sub">El resultado aparecerá aquí</p>
           </div>
 
           <div class="result-empty" *ngIf="loading">
             <span class="spinner lg"></span>
-            <p class="empty-title" style="margin-top:16px">Procesando con IA...</p>
-            <p class="empty-sub">Extrayendo coordenadas y evaluando CNN</p>
+            <p class="empty-title" style="margin-top:16px">Procesando...</p>
+            <p class="empty-sub">Extrayendo coordenadas y evaluando</p>
           </div>
 
           <div class="result-content" *ngIf="resultadoVisible">

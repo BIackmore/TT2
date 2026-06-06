@@ -67,15 +67,15 @@ export class AuthService {
   }
 
   registerGov(data: {
-    nombre: string;
-    correo: string;
-    password: string;
-    organizacion: string;
-    numTrabajador: string;
-    dependencia: string;
-    cargo: string;
-    telefono: string;
-  }): Observable<{ ok: boolean; error?: string }> {
+  nombre: string;
+  correo: string;
+  password: string;
+  organizacion: string;
+  numTrabajador: string;
+  dependencia?: string;
+  cargo: string;
+  telefono: string;
+}): Observable<{ ok: boolean; error?: string }> {
     const payload: RegisterGovRequest = {
       nombre: data.nombre,
       correo: data.correo,
@@ -83,12 +83,12 @@ export class AuthService {
       telefono: data.telefono,
       organizacion: data.organizacion,
       numTrabajador: data.numTrabajador,
-      dependencia: data.dependencia,
+      dependencia: data.dependencia || '',
       cargo: data.cargo,
       perfil: {
         organizacion: data.organizacion,
         numTrabajador: data.numTrabajador,
-        dependencia: data.dependencia,
+        dependencia: data.dependencia || '',
         cargo: data.cargo,
       },
     };

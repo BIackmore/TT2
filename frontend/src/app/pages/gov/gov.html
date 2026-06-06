@@ -18,7 +18,7 @@
 
     <!-- ═══ PROCESAR IMAGEN ═══ -->
 <ng-container *ngIf="activeTab==='procesar'">
-    <div class="sec-head"><div><h2>Procesar Imagen con IA</h2><p>Evaluación de riesgo forestal con generación de dictamen y reporte oficial.</p></div></div>
+    <div class="sec-head"><div><h2>Procesar Imagen</h2><p>Evaluación de riesgo forestal con generación de dictamen y reporte oficial.</p></div></div>
 
     <div class="pending-banner error-banner" *ngIf="errorProcess">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -49,7 +49,7 @@
             <label class="file-label" (click)="$event.stopPropagation()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Seleccionar archivo
-              <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+              <input #fileInput type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" (change)="onFileSelected($event)" hidden />
             </label>
             <span class="file-name">{{ selectedFile ? selectedFile.name : 'ningún archivo seleccionado' }}</span>
           </div>
@@ -60,7 +60,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analizar Riesgo
               </ng-container>
               <ng-container *ngIf="loadingProcess">
-                <span class="spinner"></span> Analizando con IA...
+                <span class="spinner"></span> Analizando...
               </ng-container>
             </button>
             <button *ngIf="selectedFile" class="btn-ghost" (click)="reset()">Limpiar</button>
@@ -71,14 +71,14 @@
       <div class="proc-card result-card">
         <div class="proc-card-head result-head">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-          Resultado del Análisis de IA
+          Resultado del Análisis
         </div>
         <div class="proc-card-body result-body-wrap">
 
           <div class="result-empty" *ngIf="!loadingProcess && !resultadoVisible">
             <div class="empty-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" width="40" height="40"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
             <p class="empty-title">Esperando imagen para evaluar...</p>
-            <p class="empty-sub">El reporte del sistema de IA aparecerá aquí</p>
+            <p class="empty-sub">El reporte del sistema aparecerá aquí</p>
           </div>
 
           <div class="result-empty" *ngIf="loadingProcess">

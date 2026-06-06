@@ -38,34 +38,42 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   onSubmit() {
-    this.error = '';
+  this.error = '';
 
-    if (!this.password || this.password.length < 6) {
-      this.error = 'La contraseña debe tener al menos 6 caracteres.';
-      return;
-    }
-
-    if (this.password !== this.confirmPassword) {
-      this.error = 'Las contraseñas no coinciden.';
-      return;
-    }
-
-    this.loading = true;
-
-    this.authApi.resetPassword(this.token, this.password).subscribe({
-      next: () => {
-        this.loading = false;
-        this.done = true;
-        this.error = '';
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.error || 'No se pudo actualizar la contraseña.';
-        this.cdr.detectChanges();
-      }
-    });
+  if (!this.password || this.password.length < 6) {
+    this.error = 'La contraseña debe tener al menos 6 caracteres.';
+    return;
   }
+
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>+\-]).{6,}$/;
+
+  if (!passwordRegex.test(this.password)) {
+    this.error =
+      'La contraseña debe tener mínimo 6 caracteres, una mayúscula y un carácter especial.';
+    return;
+  }
+
+  if (this.password !== this.confirmPassword) {
+    this.error = 'Las contraseñas no coinciden.';
+    return;
+  }
+
+  this.loading = true;
+
+  this.authApi.resetPassword(this.token, this.password).subscribe({
+    next: () => {
+      this.loading = false;
+      this.done = true;
+      this.error = '';
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      this.loading = false;
+      this.error = err.error?.error || 'No se pudo actualizar la contraseña.';
+      this.cdr.detectChanges();
+    }
+  });
+}
 
   goLogin() {
     this.router.navigate(['/login']);

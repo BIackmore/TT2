@@ -314,13 +314,20 @@ const forgotPassword = async (req: Request, res: Response, next: NextFunction) =
     }
 
     const user = await query(
-      "SELECT id_usuario FROM usuarios WHERE LOWER(correo)=LOWER($1)",
-      [correo]
-    );
+  "SELECT id_usuario, id_rol FROM usuarios WHERE LOWER(correo)=LOWER($1)",
+  [correo]
+);
 
     if (!user.rows.length) {
       return res.status(404).json({ ok: false, error: "No existe una cuenta con ese correo" });
     }
+
+    if (user.rows[0].id_rol === 1) {
+  return res.status(403).json({
+    ok: false,
+    error: "Los administradores no pueden recuperar contraseña mediante correo. El cambio debe realizarse directamente en la base de datos."
+  });
+}
 
     const token = crypto.randomBytes(32).toString("hex");
 
@@ -387,6 +394,27 @@ const resetPassword = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const correo = reset.rows[0].correo;
+    const user = await query(
+  "SELECT id_rol FROM usuarios WHERE LOWER(correo)=LOWER($1)",
+  [correo]
+);
+
+if (user.rows[0]?.id_rol === 1) {
+  return res.status(403).json({
+    ok: false,
+    error: "La contraseña de administradores solo puede modificarse directamente en la base de datos."
+  });
+}
+
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>+\-]).{6,}$/;
+
+if (!passwordRegex.test(password)) {
+  return res.status(400).json({
+    ok: false,
+    error:
+      "La contraseña debe tener mínimo 6 caracteres, una mayúscula y un carácter especial."
+  });
+}
     const passwordHash = await bcrypt.hash(password, 10);
 
     await query(

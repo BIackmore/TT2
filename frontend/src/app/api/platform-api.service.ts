@@ -266,10 +266,13 @@ export class PlatformApiService {
   }
 
   getBitacoras(params?: Record<string, string | number | undefined>): Observable<ApiResponse<BitacoraEntry[]>> {
-    return this.http.get<ApiResponse<BitacoraEntry[]>>(`${this.baseUrl}/bitacoras`, {
-      params: this.buildParams(params),
-    });
-  }
+  return this.http.get<ApiResponse<BitacoraEntry[]>>(`${this.baseUrl}/bitacoras`, {
+    params: this.buildParams({
+      ...params,
+      t: Date.now(),
+    }),
+  });
+}
 
   getModelMetrics(): Observable<ApiResponse<ModelMetrics>> {
   return this.http.get<ApiResponse<ModelMetrics>>(`${this.baseUrl}/analisis/model-metrics`);

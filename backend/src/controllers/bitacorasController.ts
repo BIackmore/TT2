@@ -20,14 +20,14 @@ const getAll = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const { rows } = await query(
-      `SELECT id_log, tabla_nombre, operacion, registro_id, cambiado_por,
-              TO_CHAR(fecha,'DD/MM/YYYY HH24:MI') AS fecha,
-              descripcion, datos_antes, datos_despues
-       FROM bitacoras ${where}
-       ORDER BY fecha DESC
-       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-      [...params, limit, offset]
-    );
+  `SELECT id_log, tabla_nombre, operacion, registro_id, cambiado_por,
+          TO_CHAR(fecha,'DD/MM/YYYY HH24:MI') AS fecha,
+          descripcion, datos_antes, datos_despues
+   FROM bitacoras ${where}
+   ORDER BY id_log DESC
+   LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+  [...params, limit, offset]
+);
 
     res.json({ ok: true, data: rows });
   } catch (err) {

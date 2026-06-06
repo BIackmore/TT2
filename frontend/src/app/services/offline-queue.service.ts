@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 
 import { firstValueFrom } from 'rxjs';
 
-import { PlatformApiService } from '../api/platform-api.service';
+import { PlatformApiService, UploadImageResponse } from '../api/platform-api.service';
+
 
 export interface QueuedImage {
   id: string;
@@ -13,6 +14,11 @@ export interface QueuedImage {
   addedAt: Date;
   status: 'pending' | 'uploading' | 'done' | 'error';
   userCorreo?: string;
+}
+
+export interface OfflineUploadResult {
+  result: UploadImageResponse;
+  originalBase64: string;
 }
 
 const DB_NAME    = 'incendios-offline';
@@ -68,6 +74,8 @@ export class OfflineQueueService {
     return item;
   }
 
+  
+
   /* ── Get all pending items ── */
   async getPendingItems(): Promise<QueuedImage[]> {
     const all = await this.dbGetAll();
@@ -80,30 +88,48 @@ export class OfflineQueueService {
   }
 
   /* ── Process queue when online ── */
-  async processQueue(): Promise<void> {
-    if (!this.isOnline) return;
-    const pending = await this.getPendingItems();
-    for (const item of pending) {
-      await this.uploadItem(item);
-    }
+  async processQueue(): Promise<OfflineUploadResult | null> {
+  if (!this.isOnline) return null;
+
+  const pending = await this.getPendingItems();
+
+  for (const item of pending) {
+    const result = await this.uploadItem(item);
+    if (result) return result;
   }
 
-  private async uploadItem(item: QueuedImage): Promise<void> {
-    item.status = 'uploading';
+  return null;
+}
+
+  private async uploadItem(item: QueuedImage): Promise<OfflineUploadResult | null> {
+  item.status = 'uploading';
+  await this.dbPut(item);
+
+  try {
+    const file = this.base64ToFile(item.base64Data, item.fileName, item.fileType);
+
+    console.log('Subiendo desde cola:', file.name, file.type, file.size);
+
+    const result = await firstValueFrom(this.platformApi.uploadImage(file));
+
+    item.status = 'done';
     await this.dbPut(item);
 
-    try {
-      const file = this.base64ToFile(item.base64Data, item.fileName, item.fileType);
-      await firstValueFrom(this.platformApi.uploadImage(file));
+    console.log('Imagen de cola subida correctamente:', item.fileName);
 
-      item.status = 'done';
-      await this.dbPut(item);
-    } catch {
-      item.status = 'error';
-      await this.dbPut(item);
-    }
+    return {
+      result,
+      originalBase64: item.base64Data,
+    };
+  } catch (err) {
+    console.error('Error al subir desde cola:', err);
+
+    item.status = 'error';
+    await this.dbPut(item);
+
+    return null;
   }
-
+}
   /* ── Delete item ── */
   async deleteItem(id: string): Promise<void> {
     if (!this.db) await this.initDB();
