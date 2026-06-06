@@ -33,7 +33,7 @@ authRouter.post(
   body("password").isLength({ min: 6 }),
   body("organizacion").notEmpty(),
   body("numTrabajador").notEmpty(),
-  body("dependencia").notEmpty(),
+  
   body("cargo").notEmpty(),
   validate,
   authController.registerGov

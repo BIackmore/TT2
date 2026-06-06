@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef  } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, finalize } from 'rxjs';
 
 import { AuthService, UserProfile } from '../../services/auth.service';
 import {
@@ -25,6 +25,7 @@ import { ExportService } from '../../services/export.service';
   imports: [CommonModule, FormsModule, ShellComponent, FilterByPipe, CountByPipe],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
+  
 })
 export class AdminComponent implements OnInit {
   activeTab = 'usuarios';
@@ -71,6 +72,7 @@ export class AdminComponent implements OnInit {
     private router: Router,
     private platformApi: PlatformApiService,
     private exportSvc: ExportService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   exportImagenes() {
@@ -194,7 +196,7 @@ export class AdminComponent implements OnInit {
   const g = this.nuevoGov;
 
   const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
-  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$/;
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>+\-]).{6,}$/;
   const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (
@@ -243,37 +245,49 @@ export class AdminComponent implements OnInit {
       cargo: g.cargo,
       telefono: g.telefono,
     })
+
+    .pipe(
+  finalize(() => {
+    this.savingModal = false;
+    
+  })
+)
     .subscribe({
-      next: (result) => {
-        this.savingModal = false;
+  next: (result) => {
+  console.log('RESPUESTA CREAR GOV:', result);
 
-        if (!result.ok) {
-          this.modalError = result.error || 'Error al guardar.';
-          return;
-        }
+  this.savingModal = false;
 
-        this.modalOk = true;
-        this.loadAdminData();
+  if (result.ok === false) {
+    this.modalOk = false;
+    this.modalError = result.error || 'Error al guardar.';
+    this.cdr.detectChanges();
+    return;
+  }
 
-        setTimeout(() => {
-          this.showModal = false;
-          this.modalOk = false;
-        }, 2000);
-      },
-      error: (err) => {
-        this.savingModal = false;
-        this.modalOk = false;
+  this.modalOk = true;
+  this.modalError = '';
+  this.cdr.detectChanges();
 
-        if (err.status === 409) {
-          this.modalError =
-            err.error?.error || 'Ya existe un usuario con ese correo o número de trabajador.';
-          return;
-        }
+  setTimeout(() => {
+    this.showModal = false;
+    this.modalOk = false;
+    this.savingModal = false;
+    this.loadAdminData();
+    this.cdr.detectChanges();
+  }, 1000);
+},
+  error: (err) => {
+  console.error('ERROR CREAR GOV:', err);
 
-        this.modalError =
-          err.error?.error || 'No se pudo registrar el usuario gubernamental.';
-      },
-    });
+  this.savingModal = false;
+  this.modalOk = false;
+  this.modalError =
+    err.error?.error || err.message || 'No se pudo registrar el usuario gubernamental.';
+
+  this.cdr.detectChanges();
+},
+});
 }
 
   deleteUser(correo: string) {

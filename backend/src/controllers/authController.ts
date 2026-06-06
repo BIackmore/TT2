@@ -207,13 +207,13 @@ const registerGov = async (req: Request, res: Response, next: NextFunction) => {
     const hash = await bcrypt.hash(password, 12);
     const hoy = new Date().toLocaleDateString("es-MX");
     const perfil = {
-      organizacion,
-      numTrabajador,
-      dependencia,
-      cargo,
-      estado: "activo",
-      fechaCreacion: hoy
-    };
+  organizacion,
+  numTrabajador,
+ 
+  cargo,
+  estado: "activo",
+  fechaCreacion: hoy
+};
 
     const { rows } = await query(
       `INSERT INTO usuarios (nombre, correo, contrasena, id_rol, telefono, perfil)
