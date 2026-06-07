@@ -25,12 +25,15 @@ import { ExportService } from '../../services/export.service';
   imports: [CommonModule, FormsModule, ShellComponent, FilterByPipe, CountByPipe],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
-  
+
 })
 export class AdminComponent implements OnInit {
   activeTab = 'usuarios';
   showDeleteModal = false;
   userToDelete: UserProfile | null = null;
+
+  successMessage = '';
+  deleteMessage = '';
 
   navItems: NavItem[] = [
     {
@@ -144,10 +147,14 @@ export class AdminComponent implements OnInit {
         this.zonas = this.buildZones(this.rawImages);
         this.applyStats(stats.data);
         this.applyModelMetrics(modelMetrics.data);
+
+        this.cdr.detectChanges();
       },
       error: () => {
         this.loading = false;
         this.error = 'No se pudo cargar la informacion del panel.';
+
+        this.cdr.detectChanges();
       },
     });
   }
@@ -190,53 +197,43 @@ export class AdminComponent implements OnInit {
   }
 
   guardarGov() {
-  this.modalError = '';
-  this.modalOk = false;
+    this.modalError = '';
+    this.modalOk = false;
 
-  const g = this.nuevoGov;
+    const g = this.nuevoGov;
 
-  const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
-  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>+\-]).{6,}$/;
-  const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>+\-]).{6,}$/;
+    const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (
-    !g.nombre ||
-    !g.correo ||
-    !g.password ||
-    !g.confirmPassword ||
-    !g.organizacion ||
-    !g.numTrabajador ||
-    !g.cargo
-  ) {
-    this.modalError = 'Todos los campos marcados con * son obligatorios.';
-    return;
-  }
+    if (!g.nombre || !g.correo || !g.password || !g.confirmPassword || !g.organizacion || !g.numTrabajador || !g.cargo) {
+      this.modalError = 'Todos los campos marcados con * son obligatorios.';
+      return;
+    }
 
-  if (!nombreRegex.test(g.nombre.trim())) {
-    this.modalError = 'El nombre solo puede contener letras y espacios.';
-    return;
-  }
+    if (!nombreRegex.test(g.nombre.trim())) {
+      this.modalError = 'El nombre solo puede contener letras y espacios.';
+      return;
+    }
 
-  if (!passwordRegex.test(g.password)) {
-    this.modalError =
-      'La contraseña debe tener mínimo 6 caracteres, una mayúscula y un carácter especial.';
-    return;
-  }
+    if (!passwordRegex.test(g.password)) {
+      this.modalError = 'La contraseña debe tener mínimo 6 caracteres, una mayúscula y un carácter especial.';
+      return;
+    }
 
-  if (g.password !== g.confirmPassword) {
-    this.modalError = 'Las contraseñas no coinciden.';
-    return;
-  }
+    if (g.password !== g.confirmPassword) {
+      this.modalError = 'Las contraseñas no coinciden.';
+      return;
+    }
 
-  if (!emailRx.test(g.correo)) {
-    this.modalError = 'El formato del correo no es válido.';
-    return;
-  }
+    if (!emailRx.test(g.correo)) {
+      this.modalError = 'El formato del correo no es válido.';
+      return;
+    }
 
-  this.savingModal = true;
+    this.savingModal = true;
 
-  this.auth
-    .registerGov({
+    this.auth.registerGov({
       nombre: g.nombre,
       correo: g.correo,
       password: g.password,
@@ -244,51 +241,41 @@ export class AdminComponent implements OnInit {
       numTrabajador: g.numTrabajador,
       cargo: g.cargo,
       telefono: g.telefono,
-    })
+    }).pipe(
+      finalize(() => {
+        this.savingModal = false;
+      })
+    ).subscribe({
+      next: (result) => {
+        if (result.ok === false) {
+          this.modalOk = false;
+          this.modalError = result.error || 'Error al guardar.';
+          this.cdr.detectChanges();
+          return;
+        }
 
-    .pipe(
-  finalize(() => {
-    this.savingModal = false;
-    
-  })
-)
-    .subscribe({
-  next: (result) => {
-  console.log('RESPUESTA CREAR GOV:', result);
+        // 1. ACCIONES INMEDIATAS (Cierra modal, avisa éxito y recarga la tabla de golpe)
+        this.showModal = false;
+        this.modalOk = false;
+        this.successMessage = '¡Usuario gubernamental creado exitosamente!';
+        this.loadAdminData();
 
-  this.savingModal = false;
+        // 2. Forzamos a que la vista se actualice YA
+        this.cdr.detectChanges();
 
-  if (result.ok === false) {
-    this.modalOk = false;
-    this.modalError = result.error || 'Error al guardar.';
-    this.cdr.detectChanges();
-    return;
+        // 3. A los 4 segundos, SOLO quitamos el mensaje verde, nada más.
+        setTimeout(() => {
+          this.successMessage = '';
+          this.cdr.detectChanges();
+        }, 4000);
+      },
+      error: (err) => {
+        this.modalOk = false;
+        this.modalError = err.error?.error || err.message || 'No se pudo registrar el usuario gubernamental.';
+        this.cdr.detectChanges();
+      },
+    });
   }
-
-  this.modalOk = true;
-  this.modalError = '';
-  this.cdr.detectChanges();
-
-  setTimeout(() => {
-    this.showModal = false;
-    this.modalOk = false;
-    this.savingModal = false;
-    this.loadAdminData();
-    this.cdr.detectChanges();
-  }, 1000);
-},
-  error: (err) => {
-  console.error('ERROR CREAR GOV:', err);
-
-  this.savingModal = false;
-  this.modalOk = false;
-  this.modalError =
-    err.error?.error || err.message || 'No se pudo registrar el usuario gubernamental.';
-
-  this.cdr.detectChanges();
-},
-});
-}
 
   deleteUser(correo: string) {
   const user = this.users.find((item) => item.correo === correo);
@@ -305,35 +292,50 @@ export class AdminComponent implements OnInit {
 }
 
 confirmDeleteUser() {
-  if (!this.userToDelete?.id_usuario) return;
+    if (!this.userToDelete?.id_usuario) return;
 
-  this.platformApi.deleteUser(this.userToDelete.id_usuario).subscribe({
-    next: () => {
-      this.showDeleteModal = false;
-      this.userToDelete = null;
-      this.loadAdminData();
-    },
-    error: () => {
-      this.error = 'No se pudo eliminar el usuario.';
-      this.showDeleteModal = false;
-      this.userToDelete = null;
-    },
-  });
-}
+    this.platformApi.deleteUser(this.userToDelete.id_usuario).subscribe({
+      next: () => {
+        // 1. Cierra el modal, limpia variable y recarga tablas
+        this.showDeleteModal = false;
+        this.userToDelete = null;
+        this.loadAdminData();
+
+        //  2. NUEVO: Mostramos el mensaje de eliminación exitosa
+        this.deleteMessage = '¡Usuario eliminado exitosamente!';
+        this.cdr.detectChanges();
+
+        //  3. NUEVO: Lo ocultamos después de 4 segundos
+        setTimeout(() => {
+          this.deleteMessage = '';
+          this.cdr.detectChanges();
+        }, 4000);
+      },
+      error: () => {
+        this.error = 'No se pudo eliminar el usuario.';
+        this.showDeleteModal = false;
+        this.userToDelete = null;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   toggleEstado(u: UserProfile) {
     if (!u.id_usuario) {
       return;
     }
 
-    
-
     this.platformApi.toggleUserStatus(u.id_usuario).subscribe({
       next: ({ activo }) => {
         u.estado = activo ? 'activo' : 'inactivo';
         u.activo = activo;
+
+        // Vuelve a traer la Bitácora fresca para que refleje esta activación/desactivación
+        this.loadAdminData();
       },
       error: () => {
         this.error = 'No se pudo actualizar el estado del usuario.';
+        this.cdr.detectChanges();
       },
     });
   }
@@ -443,7 +445,7 @@ confirmDeleteUser() {
   recursos: any[] = [];
   metricConfig = { precision: 95, respuesta: 2.5, confianza: 0.85, falsos: 5 };
   editingMetrics = false;
-  
+
   private mapUser(user: PlatformUser): UserProfile {
     const profile = user.perfil ?? {};
 

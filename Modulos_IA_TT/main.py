@@ -12,18 +12,62 @@ from cnn_modulo import RedIncendios, obtener_imagen_aleatoria, cargar_dataset
 from clima_modulo import IntegracionClimatica
 import autoencoder
 
+from shapely.geometry import Point, Polygon
+
+# Definición del Polígono del Tepozteco
+puntos_poligono = [
+    (-99.040667, 18.963807), (-99.075789, 18.952502), (-99.093604, 18.953894),
+    (-99.096679, 18.930079), (-99.094957, 18.917024), (-99.094955, 18.917011),
+    (-99.094055, 18.910153), (-99.110864, 18.903886), (-99.110882, 18.903879),
+    (-99.131082, 18.896349), (-99.184779, 18.944111), (-99.192309, 18.977054),
+    (-99.193225, 18.981065), (-99.164910, 19.023885), (-99.1572, 19.03664),
+    (-99.157158, 19.036709), (-99.143325, 19.059601), (-99.135889, 19.087921),
+    (-99.135664, 19.088779), (-99.135540, 19.088762), (-99.043192, 19.075826),
+    (-99.04146, 19.052379), (-99.041453, 19.052292), (-99.035046, 18.965617),
+    (-99.040661, 18.963809), (-99.040667, 18.963807)
+]
+POLIGONO_TEPOZTECO = Polygon(puntos_poligono)
+
+
+# Función de Validación Geográfica de las Coordenadas extraidas de los metadatos
+def validar_ubicacion(lat, lon):
+    try:
+        lat = float(lat)
+        lon = float(lon)
+        
+        # formato (Longitud, Latitud)
+        punto = Point(lon, lat)
+        
+        # Devuelve True si el punto está dentro del polígono del Tepozteco
+        return POLIGONO_TEPOZTECO.contains(punto)
+    except (ValueError, TypeError):
+        # Si las coordenadas están vacías o no son válidas, rechaza la imagen
+        return False
+
 def evaluar_imagen_completa(ruta_img, lat, lon, modelo_cnn, modulo_clima):
     # Filtro de Contexto (CNN de Contexto)
     es_contexto_valido = autoencoder.verificar_contexto(ruta_img)
     if not es_contexto_valido:
-        print("La imagen no pertenece al contexto.")
+        print("La imagen NO pertenece al contexto.")
         return {"status": "rechazado", "mensaje": "La imagen NO pertenece al Contexto."}
+    else:
+        print("La imagen SÍ Pertenece al Contexto.")
+    
+    #Filtro de Ubicación (para validar que las coordenadas están dentro del Polígono del Tepozteco)
+    ubicacion_valida = validar_ubicacion(lat, lon)
+    if not ubicacion_valida:
+        print("La imagen es de una Ubicación Inválida. Está fuera del Polígono Geográfico del Tepozteco.")
+        return {"status": "rechazado", "mensaje": "La imagen es de una zona cuya ubicación está fuera del Polígono Geográfico del Tepozteco."}
+    else:
+        print("La zona de la imagen está dentro del Polígono Geográfico del Tepozteco.")
         
     # Filtro de Riesgo Inicial (Autoencoder)
     tiene_riesgo_inicial = autoencoder.verificar_riesgo_inicial(ruta_img)
     if not tiene_riesgo_inicial:
         print("La imagen analizada no tiene Riesgo de Incendio-")
         return {"status": "rechazado", "mensaje": "La imagen analizada NO tiene Riesgo de Incendio."}
+    else:
+        print("La imagen presenta un riesgo aparente (Posible Riesgo).")
 
     # Integración Climática
     temp, hum, vien = modulo_clima.obtener_clima(lat, lon)
