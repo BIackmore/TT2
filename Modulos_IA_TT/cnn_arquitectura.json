@@ -1,0 +1,74 @@
+[
+    {
+        "type": "Conv2D",
+        "in_channels": 3,
+        "out_channels": 16,
+        "kernel": 3,
+        "stride": 1,
+        "padding": 1
+    },
+    {
+        "type": "LeakyReLU",
+        "alpha": 0.01
+    },
+    {
+        "type": "MaxPool2D",
+        "pool_size": 2,
+        "stride": 2
+    },
+    {
+        "type": "Conv2D",
+        "in_channels": 16,
+        "out_channels": 32,
+        "kernel": 3,
+        "stride": 1,
+        "padding": 1
+    },
+    {
+        "type": "LeakyReLU",
+        "alpha": 0.01
+    },
+    {
+        "type": "MaxPool2D",
+        "pool_size": 2,
+        "stride": 2
+    },
+    {
+        "type": "Conv2D",
+        "in_channels": 32,
+        "out_channels": 64,
+        "kernel": 3,
+        "stride": 1,
+        "padding": 1
+    },
+    {
+        "type": "LeakyReLU",
+        "alpha": 0.01
+    },
+    {
+        "type": "MaxPool2D",
+        "pool_size": 2,
+        "stride": 2
+    },
+    {
+        "type": "Flatten"
+    },
+    {
+        "type": "Dense",
+        "shape": [
+            64,
+            50176
+        ]
+    },
+    {
+        "type": "LeakyReLU",
+        "alpha": 0.01
+    },
+    {
+        "type": "Dense",
+        "shape": [
+            3,
+            64
+        ]
+    }
+]

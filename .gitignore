@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+venv/
+__pycache__/
+*.pyc
+.env
+*.h5
+*.npz
+Dataset/
+mapas_riesgo/
+backend/uploads/
