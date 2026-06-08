@@ -232,11 +232,12 @@ private onlineHandler = async () => {
 
       const formatosPermitidos = ['image/png', 'image/jpeg'];
 
-    if (!formatosPermitidos.includes(f.type)) {
-      this.error = 'Solo se permiten imágenes PNG, JPG o JPEG.';
-      input.value = '';
-      return;
-    }
+   if (!formatosPermitidos.includes(f.type)) {
+  this.errorProcess = 'Solo se permiten imágenes PNG, JPG o JPEG.';
+  this.error = '';
+  input.value = '';
+  return;
+}
 
     this.setFile(f);
   }
@@ -253,7 +254,9 @@ private onlineHandler = async () => {
   setFile(file: File) {
     this.selectedFile = file;
     this.resultadoVisible = false;
+    
     this.errorProcess = '';
+    this.error = '';
 
     this.reportData.nombre = file.name;
     this.reportData.extension = file.name.split('.').pop() || 'N/D';

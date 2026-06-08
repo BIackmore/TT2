@@ -1504,3 +1504,38 @@
     }
   }
 }
+
+.error-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 24px 0 30px;
+  padding: 20px 24px;
+  border: 1px solid #f5b5b5;
+  border-radius: 18px;
+  background: #fdecec;
+  color: #8b0000;
+}
+
+.error-alert strong {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.error-alert p {
+  margin: 0;
+  color: #9b1111;
+}
+
+.error-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #ff8f8f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e53935;
+  font-weight: bold;
+}
