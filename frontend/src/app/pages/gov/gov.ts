@@ -512,11 +512,11 @@ private onlineHandler = async () => {
   getImageUrl(img: any): string {
     if (!img) return '';
     
-    // Buscamos agresivamente en TODAS las posibles propiedades que tu backend usa
+    // Buscamos TODAS las posibles propiedades
     const pathTarget = img.ruta_archivo || img.ruta_imagen || img.ruta || img.imagen || img.nombre_archivo;
 
     if (pathTarget) {
-      // Limpiamos la ruta y nos quedamos solo con el nombre del archivo final
+      // ruta y nos quedamos solo con el nombre del archivo final
       const filename = pathTarget.split('\\').pop()?.split('/').pop();
       if (filename && filename.includes('.')) {
         return `http://localhost:3000/uploads/${filename}`;

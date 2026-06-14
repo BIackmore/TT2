@@ -170,50 +170,7 @@
 
   </ng-container>
 
-  <!-- ═══════════════════════════════════════════
-       BITÁCORA + DESCARGA
-  ═══════════════════════════════════════════ -->
-  <ng-container *ngIf="activeTab==='bitacora'">
-    <div class="sec-head">
-      <div><h2>Bitácora & Descarga de Reportes</h2><p>Visualiza reportes del sistema y descarga archivos guardados</p></div>
-      <button class="btn-ember"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>Exportar Todo</button>
-    </div>
-    <div class="four-cols mb-20">
-      <div class="stat-card"><div class="sc-icon" style="background:rgba(255,61,61,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div><div class="sc-val danger-text">{{ repAlta }}</div><div class="sc-label">Severidad Alta</div></div>
-      <div class="stat-card"><div class="sc-icon" style="background:rgba(255,152,0,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div><div class="sc-val warn-text">{{ repMedia }}</div><div class="sc-label">Severidad Media</div></div>
-      <div class="stat-card"><div class="sc-icon" style="background:rgba(167,139,250,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="sc-val" style="color:var(--purple)">{{ repProc }}</div><div class="sc-label">En Proceso</div></div>
-      <div class="stat-card"><div class="sc-icon" style="background:rgba(56,189,248,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2" width="18" height="18"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg></div><div class="sc-val info-text">{{ reportes.length }}</div><div class="sc-label">Total Reportes</div></div>
-    </div>
-    <div class="search-wrap"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input [(ngModel)]="bSearch" placeholder="Buscar por ubicación, tipo o usuario..." /></div>
-    <div class="tbl-wrap mb-20">
-      <table>
-        <thead><tr><th>ID</th><th>Tipo</th><th>Ubicación</th><th>Severidad</th><th>Usuario</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
-        <tbody>
-          <tr *ngFor="let r of filteredReportes">
-            <td class="muted-text">#{{ r.id }}</td>
-            <td style="color:var(--snow);font-weight:500">{{ r.tipo }}</td>
-            <td>{{ r.ubicacion }}</td>
-            <td><span class="badge" [class]="r.sev==='Alta'?'b-danger':r.sev==='Media'?'b-warn':'b-ok'">{{ r.sev }}</span></td>
-            <td>{{ r.usuario }}</td>
-            <td class="muted-text" style="font-size:0.78rem">{{ r.fecha }}</td>
-            <td><span class="badge" [class]="r.estado==='Atendido'||r.estado==='Completado'?'b-ok':r.estado==='En Proceso'?'b-purple':'b-neutral'">{{ r.estado }}</span></td>
-            <td><button class="ico-btn ico-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button></td>
-          </tr>
-          <tr *ngIf="filteredReportes.length===0">
-            <td colspan="8" class="empty-cell">No hay reportes disponibles</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="sec-head compact mb-12"><h2>Archivos Descargables</h2></div>
-    <div class="archivos-list">
-      <div *ngFor="let a of archivos" class="archivo-item">
-        <div class="archivo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-        <div class="archivo-info"><p class="archivo-nombre">{{ a.nombre }}</p><p class="archivo-meta">{{ a.size }} · {{ a.formato }} · {{ a.fecha }}</p></div>
-        <div class="archivo-actions"><span class="badge b-ok">✓ Disponible</span><button class="btn-ember" style="padding:7px 14px;font-size:0.8rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>Descargar</button></div>
-      </div>
-    </div>
-  </ng-container>
+ 
 
   <!-- ═══════════════════════════════════════════
        HISTORIAL DE IMÁGENES
@@ -243,59 +200,8 @@
     </div>
   </ng-container>
 
-  <!-- ═══════════════════════════════════════════
-       DETALLES DE ZONAS
-  ═══════════════════════════════════════════ -->
-  <ng-container *ngIf="activeTab==='zonas'">
-    <div class="sec-head"><div><h2>Detalles de Zonas de Monitoreo</h2><p>Información en tiempo real de cada zona vigilada</p></div></div>
-    <div class="zonas-grid">
-      <div *ngFor="let z of zonas" class="zona-card">
-        <div class="zona-card-header"><div><p class="zona-name">{{ z.nombre }}</p><p class="muted-text" style="font-size:0.75rem">Área: {{ z.area }} · Últ. act.: {{ z.upd }}</p></div><span class="badge" [class]="z.rColor">{{ z.riesgo }} Riesgo</span></div>
-        <div class="zona-clima">
-          <div class="zc-item"><svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" width="14" height="14"><path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/></svg><span>Temp.</span><strong>{{ z.temp }}</strong></div>
-          <div class="zc-item"><svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2" width="14" height="14"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg><span>Humedad</span><strong>{{ z.hum }}</strong></div>
-          <div class="zc-item"><svg viewBox="0 0 24 24" fill="none" stroke="var(--fog)" stroke-width="2" width="14" height="14"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2"/></svg><span>Viento</span><strong>{{ z.viento }}</strong></div>
-        </div>
-        <div class="zona-inc"><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" width="13" height="13"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg><span>Incidentes registrados</span><strong>{{ z.inc }}</strong></div>
-        <button class="btn-ember" style="width:100%;justify-content:center">Ver Detalles Completos</button>
-      </div>
-      <div class="empty-cell" *ngIf="zonas.length===0">No hay zonas detectadas aun</div>
-    </div>
-  </ng-container>
+ 
 
-  <!-- ═══════════════════════════════════════════
-       MODELO DE IA
-  ═══════════════════════════════════════════ -->
-  <ng-container *ngIf="activeTab==='ia'">
-    <div class="sec-head"><div><h2>Modelo de IA en Producción</h2><p>Gestiona el modelo de detección activo</p></div></div>
-    <div class="card card-padded mb-20">
-      <div class="modelo-active-top">
-        <div class="modelo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
-        <div><p class="modelo-name">{{ modeloActivo.nombre }}</p><p class="muted-text">v{{ modeloActivo.version }}</p></div>
-        <span class="badge b-ok ml-auto">✓ Activo</span>
-      </div>
-      <div class="three-cols mb-16">
-        <div class="m-stat"><span>Precisión</span><strong class="ok-text">{{ modeloActivo.precision }}%</strong></div>
-        <div class="m-stat"><span>Detecciones</span><strong>{{ modeloActivo.detecciones }}</strong></div>
-        <div class="m-stat"><span>Actualizado</span><strong>{{ modeloActivo.actualizacion }}</strong></div>
-      </div>
-      <div class="prog-wrap"><div class="prog-head"><span>Precisión del Modelo</span><span class="ok-text">{{ modeloActivo.precision }}%</span></div><div class="prog-bg"><div class="prog-fill" style="background:var(--ok)" [style.width]="modeloActivo.precision+'%'"></div></div></div>
-    </div>
-    <div class="sec-head compact mb-12"><h2>Modelos Disponibles</h2></div>
-    <div class="modelos-list mb-20">
-      <div *ngFor="let m of modelos" class="modelo-item">
-        <div><div class="modelo-item-top"><span class="modelo-item-name">{{ m.nombre }}</span><span class="badge" [class]="m.tagC">{{ m.tag }}</span></div><p class="muted-text" style="font-size:0.78rem">v{{ m.version }} · {{ m.precision }}% precisión · {{ m.tamano }} · {{ m.fecha }}</p></div>
-        <div class="modelo-item-actions"><button class="btn-ghost">Descargar</button><button class="btn-ember" style="padding:8px 16px;font-size:0.82rem">Actualizar</button></div>
-      </div>
-    </div>
-    <div class="sec-head compact mb-12"><h2>Cargar Modelo Personalizado</h2></div>
-    <div class="upload-model">
-      <svg viewBox="0 0 24 24" fill="none" stroke="var(--fog)" stroke-width="1.5" width="40" height="40"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      <p style="color:var(--snow);font-weight:600">Arrastra y suelta tu modelo aquí</p>
-      <p class="muted-text" style="font-size:0.8rem">Formatos: .h5, .pb, .onnx (máx. 500 MB)</p>
-      <button class="btn-ember">Seleccionar Archivo</button>
-    </div>
-  </ng-container>
 
   <!-- ═══════════════════════════════════════════
        RENDIMIENTO + MÉTRICAS
